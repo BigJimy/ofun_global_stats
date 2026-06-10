@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Générateur de rapport journalier — O'Fun Park</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+:root {
+  --brand-red:        #7b170f;
+  --brand-red-light:  #cca09c;
+  --brand-gold:       #c98a40;
+  --brand-blue:       #4a6d8c;
+  --brand-green:      #1d9e75;
+
+  --green-bg:  #eaf3de;
+  --green-fg:  #3b6d11;
+  --red-bg:    #fcebeb;
+  --red-fg:    #791f1f;
+  --amber-bg:  #faeeda;
+
+  --text-primary:   #1a1a1a;
+  --text-secondary: #5f5e5a;
+  --text-tertiary:  #888780;
+  --bg-page:        #f5f4ef;
+  --bg-card:        #ffffff;
+  --bg-soft:        #f0eee6;
+  --border:         #d3d1c7;
+  --border-light:   #e6e4dd;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-page);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ============ UI Shell ============ */
+.ui-shell {
+  max-width: 720px;
+  margin: 1.5rem auto;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  border: 0.5px solid var(--border);
+}
+.ui-shell-header {
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 1.25rem; padding-bottom: 1rem;
+  border-bottom: 0.5px solid var(--border-light);
+}
+.ui-logo {
+  background: var(--brand-red); padding: 14px 18px; border-radius: 4px;
+  height: 64px; min-width: 95px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ui-logo svg { height: 36px; width: auto; display: block; }
+.ui-shell-title { font-size: 18px; font-weight: 500; }
+.ui-shell-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+.file-drop {
+  border: 2px dashed var(--border); border-radius: 8px;
+  padding: 1.5rem; text-align: center; cursor: pointer;
+  transition: all 0.2s;
+}
+.file-drop:hover, .file-drop.dragover {
+  border-color: var(--brand-red); background: var(--bg-soft);
+}
+.file-drop-text { font-size: 13px; color: var(--text-secondary); }
+.file-drop-text strong { color: var(--brand-red); }
+.file-drop-name { font-size: 12px; color: var(--text-primary); margin-top: 6px; font-weight: 500; }
+
+.form-block {
+  margin-top: 1rem; padding: 0.75rem 1rem;
+  border-radius: 8px; background: var(--bg-soft);
+  border: 0.5px solid var(--border-light);
+}
+.form-block-title {
+  font-size: 12px; font-weight: 600; color: var(--brand-red);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.ui-controls {
+  display: flex; gap: 0.75rem; align-items: center;
+  margin-top: 0.5rem; flex-wrap: wrap;
+}
+.ui-controls label { font-size: 12px; color: var(--text-secondary); }
+.ui-controls select {
+  padding: 8px 12px; border-radius: 6px; border: 0.5px solid var(--border);
+  background: white; font-size: 13px; cursor: pointer; font-family: inherit;
+  min-width: 220px;
+}
+.ui-controls select:disabled { opacity: 0.5; cursor: not-allowed; }
+.version-radio {
+  display: flex; gap: 0.75rem; flex-wrap: wrap;
+}
+.version-radio label {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; background: white;
+  border: 0.5px solid var(--border); border-radius: 6px;
+  cursor: pointer; font-size: 12px;
+}
+.version-radio label:has(input:checked) {
+  border-color: var(--brand-red);
+  background: var(--bg-soft);
+  font-weight: 500;
+}
+.version-radio input { cursor: pointer; }
+
+.ui-actions {
+  display: flex; gap: 0.75rem; align-items: center;
+  margin-top: 1.25rem; flex-wrap: wrap;
+}
+button.primary, button.secondary {
+  padding: 10px 18px; border-radius: 6px; cursor: pointer;
+  font-weight: 500; font-size: 13px; font-family: inherit;
+}
+button.primary { background: var(--brand-red); color: white; border: none; }
+button.primary:hover:not(:disabled) { background: #5e110b; }
+button.primary:disabled { background: #b4b2a9; cursor: not-allowed; }
+button.secondary { background: white; color: var(--text-primary); border: 0.5px solid var(--border); }
+button.secondary:hover { background: var(--bg-soft); }
+
+.log-zone {
+  margin-top: 1rem; padding: 0.75rem 1rem;
+  background: var(--bg-page); border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px; color: var(--text-secondary); white-space: pre-wrap;
+}
+.log-zone.empty { display: none; }
+.log-zone.error { background: var(--red-bg); color: var(--red-fg); }
+.log-zone.success { background: var(--green-bg); color: var(--green-fg); }
+
+/* ============ Page A4 ============ */
+@page { size: A4 portrait; margin: 12mm 14mm; }
+
+@media screen {
+  .page-sheet {
+    width: 210mm; min-height: 297mm; background: white;
+    padding: 12mm 14mm; box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+    margin: 1rem auto;
+    display: flex; flex-direction: column;
+  }
+}
+@media print {
+  html, body { background: white !important; padding: 0; margin: 0; }
+  .ui-shell { display: none !important; }
+  .page-sheet {
+    width: auto !important; min-height: auto !important;
+    padding: 0 !important; margin: 0 !important;
+    box-shadow: none !important; page-break-after: always;
+    display: flex; flex-direction: column;
+  }
+  .page-sheet:last-child { page-break-after: auto; }
+}
+
+.report-container { display: none; }
+.report-container.ready { display: block; }
+.page-content { flex: 1; }
+
+/* ============ Report styling ============ */
+.r-header {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 1rem; margin-bottom: 1.25rem; padding-bottom: 0.85rem;
+  border-bottom: 2px solid var(--brand-red);
+}
+.r-header-left { display: flex; align-items: center; gap: 1rem; }
+.r-logo {
+  background: var(--brand-red); padding: 12px 16px; border-radius: 4px;
+  height: 56px; min-width: 85px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.r-logo svg { height: 32px; width: auto; display: block; }
+.r-overtitle { font-size: 10px; color: var(--text-secondary); letter-spacing: 0.15em; margin-bottom: 4px; }
+.r-title { font-size: 22px; font-weight: 500; line-height: 1.1; }
+.r-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.r-header-right { font-size: 10px; color: var(--text-secondary); text-align: right; }
+
+.r-section-label { font-size: 11px; color: var(--text-secondary); letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+
+.r-block {
+  border: 0.5px solid var(--border); border-radius: 8px;
+  padding: 1rem 1.25rem; margin-bottom: 1.25rem; background: white;
+}
+.r-block-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.r-block-grid .r-block { margin-bottom: 0; }
+
+.perf-label {
+  font-size: 11px; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;
+}
+.big-number { font-size: 36px; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.big-number.mid { font-size: 26px; }
+.badge {
+  display: inline-block; font-size: 12px; padding: 3px 9px;
+  border-radius: 8px; vertical-align: middle;
+}
+.badge.up { background: var(--green-bg); color: var(--green-fg); }
+.badge.down { background: var(--red-bg); color: var(--red-fg); }
+.badge.neutral { background: var(--bg-soft); color: var(--text-secondary); }
+.perf-meta { font-size: 11px; color: var(--text-secondary); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.perf-row { display: grid; grid-template-columns: 1fr 240px; gap: 1.5rem; align-items: center; }
+
+.boutique-card .boutique-title { font-size: 13px; font-weight: 600; margin-bottom: 0.75rem; letter-spacing: 0.02em; }
+.boutique-card .boutique-title.small { font-size: 12px; margin-bottom: 0.5rem; }
+
+.kpi-card { background: var(--bg-soft); padding: 0.6rem 0.75rem; border-radius: 6px; }
+.kpi-label { font-size: 10px; color: var(--text-secondary); margin-bottom: 2px; }
+.kpi-value { font-size: 16px; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kpi-foot { font-size: 10px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+.cat-row { display: grid; grid-template-columns: 1fr 180px; gap: 1rem; align-items: center; }
+.cat-table { width: 100%; border-collapse: collapse; font-size: 11px; font-variant-numeric: tabular-nums; }
+.cat-table th { text-align: left; padding: 4px; color: var(--text-secondary); font-weight: 500; border-bottom: 0.5px solid #b4b2a9; }
+.cat-table th:nth-child(2), .cat-table th:nth-child(3) { text-align: right; }
+.cat-table td { padding: 4px; border-bottom: 0.5px solid var(--border-light); }
+.cat-table td:nth-child(2), .cat-table td:nth-child(3) { text-align: right; }
+.cat-table tr.total td { border-top: 1px solid var(--brand-red); border-bottom: none; padding-top: 5px; font-weight: 500; }
+.cat-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.donut-wrap { display: flex; justify-content: center; align-items: center; }
+
+.cat-table td.pdv { font-weight: 500; }
+
+/* Tableau PDV (5 colonnes) */
+.pdv-table th:nth-child(2), .pdv-table th:nth-child(3), .pdv-table th:nth-child(5),
+.pdv-table td:nth-child(2), .pdv-table td:nth-child(3), .pdv-table td:nth-child(5) {
+  text-align: right; font-variant-numeric: tabular-nums;
+}
+.pdv-table th:nth-child(4), .pdv-table td:nth-child(4) { text-align: center; }
+
+/* Tableau comparaison N vs N-1 (6 colonnes) */
+.cmp-table th:nth-child(2), .cmp-table th:nth-child(3), .cmp-table th:nth-child(4), .cmp-table th:nth-child(5),
+.cmp-table td:nth-child(2), .cmp-table td:nth-child(3), .cmp-table td:nth-child(4), .cmp-table td:nth-child(5) {
+  text-align: right; font-variant-numeric: tabular-nums;
+}
+.cmp-table th:nth-child(6), .cmp-table td:nth-child(6) { text-align: center; }
+
+/* Tableaux cumul (5 colonnes) et groupes (4 colonnes) */
+.cumul-cat-table th:nth-child(2), .cumul-cat-table th:nth-child(3), .cumul-cat-table th:nth-child(4),
+.cumul-cat-table td:nth-child(2), .cumul-cat-table td:nth-child(3), .cumul-cat-table td:nth-child(4) {
+  text-align: right; font-variant-numeric: tabular-nums;
+}
+.cumul-cat-table th:nth-child(5), .cumul-cat-table td:nth-child(5) { text-align: center; }
+.cumul-grp-table th:nth-child(2), .cumul-grp-table th:nth-child(3),
+.cumul-grp-table td:nth-child(2), .cumul-grp-table td:nth-child(3) {
+  text-align: right; font-variant-numeric: tabular-nums;
+}
+.cumul-grp-table th:nth-child(4), .cumul-grp-table td:nth-child(4) { text-align: center; }
+
+.footer-page {
+  margin-top: auto; padding-top: 1rem;
+  font-size: 10px; color: var(--text-tertiary);
+  border-top: 0.5px solid var(--border-light);
+  display: flex; justify-content: space-between;
+}
+</style>
+</head>
+<body>
+
+<!-- ============ UI Shell (cachée à l'impression) ============ -->
+<div class="ui-shell" id="uiShell">
+  <div class="ui-shell-header">
+    <div class="ui-logo"><svg id="Calque_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 222 103"> <g> <g> <g> <path d="M103.89,29.39c.53.41,1.05.7,1.63.88.58.18,1.11.53,1.63.99.53.47.76,1.11.76,1.87s-4.08,31.81-4.08,32.22c0,.93.35,1.58,1.05,1.93s1.87.53,3.51.53h.23c1.75,0,3.04-.23,3.86-.7.82-.47,1.28-1.28,1.46-2.39l1.97-14.62,8.89-.11c1.52,0,2.58-.35,3.16-1.05s.88-1.93.88-3.74c0-1.05-.53-1.58-1.63-1.58-.35,0-1.58.06-3.68.18-2.1.12-5.74.28-6.91.28l1.4-11.16c.18-1.11.41-1.81.76-2.16.35-.35,1.17-.53,2.45-.53h2.15c1.63,0,2.69.23,3.16.64.47.41.88,1.52,1.28,3.33.29,1.52.64,2.57,1.05,3.09s.93.82,1.58.82c1.46,0,2.57-1.23,3.33-3.74.76-2.51,1.11-5.03,1.11-7.54,0-.88-.23-1.58-.64-2.04-.41-.47-1.17-.7-2.22-.76-2.74-.18-4.13-.29-9.45-.29-4.76,0-14.04.34-14.37.35-2.22.12-3.63.41-4.21.82s-.88,1.4-.88,2.92c0,.64.23,1.17.76,1.58h0Z" style="fill: #fff;"/> <path d="M136.66,41.57c.53.42,1.07.71,1.66.89.59.18,1.13.53,1.66,1.01s.77,1.13.77,1.9c0,.42-.42,2.85-1.25,7.24-.83,4.39-1.25,7.3-1.25,8.73,0,2.08.59,3.68,1.72,4.81s2.79,1.66,4.98,1.66c0,0,3.28.34,7.06-2.31,2.04-1.42,3.79-3.32,5.16-5.93-.18,1.36-.3,2.25-.3,2.67,0,3.5,1.9,5.28,5.64,5.28,2.5,0,4.81-.72,7.01-2.08s3.26-3.09,3.26-5.17c0-.65-.12-1.25-.36-1.72s-.47-.72-.72-.72c-.06,0-.53.12-1.36.3-.83.18-1.48.3-1.96.3-.72,0-1.07-.36-1.07-1.13,0-.59.36-3.86,1.12-9.79.77-5.93,1.13-9.02,1.13-9.32,0-.89-.36-1.54-1.07-1.9-.72-.36-1.9-.53-3.62-.53-1.84,0-3.14.24-3.98.71-.83.47-1.31,1.31-1.48,2.44l-1.31,10.97c-.36,2.91-1.25,5.34-2.67,7.3s-3.09,2.97-4.98,2.97c-1.25,0-1.9-.77-1.9-2.31,0-1.13.47-4.33,1.42-9.55.95-5.22,1.42-8.37,1.42-9.43,0-1.12-.47-1.9-1.42-2.37-.95-.47-2.85-.71-5.64-.71-2.55,0-4.45.18-5.63.47-1.19.3-1.96.72-2.31,1.25-.36.53-.53,1.36-.53,2.5,0,.65.23,1.19.77,1.61h-.01Z" style="fill: #fff;"/> <path d="M174.17,41.92c.53.42,1.07.72,1.66.89.59.18,1.12.53,1.66,1.01.53.47.77,1.12.77,1.9,0,.59-.42,3.98-1.19,10.08-.77,6.11-1.19,9.38-1.19,9.73,0,.95.36,1.6,1.07,1.96.72.36,1.9.53,3.5.53,0,0,2.56,0,4.28-.95.84-.47,1.31-1.31,1.48-2.44l1.07-9.02c.42-3.38,1.36-6.17,2.91-8.37,1.54-2.2,3.14-3.32,4.87-3.32.77,0,1.36.24,1.78.72.42.47.59,1.36.59,2.61,0,.95-.3,3.39-.83,7.36-.53,3.98-.83,6.53-.83,7.71,0,1.66.47,2.97,1.42,3.98s2.31,1.48,4.15,1.48c2.44,0,4.69-.72,6.82-2.2,2.14-1.48,3.2-3.14,3.2-4.98,0-.66-.12-1.25-.36-1.72s-.47-.72-.72-.72c-.06,0-.47.12-1.25.3-.77.18-1.36.3-1.78.3-.72,0-1.07-.36-1.07-1.12,0-.3.24-2.31.72-6.06.47-3.74.72-6.23.72-7.48,0-5.34-2.31-8.01-6.95-8.01-2.37,0-4.68.72-6.88,2.14-2.2,1.42-4.09,3.62-5.7,6.59.42-3.14.59-5.04.59-5.64,0-1.13-.47-1.9-1.42-2.37s-2.73-.72-5.28-.72-4.45.18-5.7.47c-1.25.3-2.02.72-2.37,1.25-.36.53-.53,1.36-.53,2.5,0,.66.24,1.19.77,1.61h0Z" style="fill: #fff;"/> </g> <g> <path d="M100.32,78.73c.43-.58.96-1.04,1.59-1.37s1.31-.49,2.05-.49c.9,0,1.63.24,2.18.71.55.47.87,1.12.94,1.94h-2.03c-.09-.31-.26-.55-.51-.71s-.55-.24-.91-.24c-.57,0-1.06.2-1.47.59s-.69.91-.8,1.57c-.04.2-.05.38-.05.53,0,.5.14.9.42,1.2.28.29.66.45,1.15.45.35,0,.68-.08.99-.25s.56-.4.77-.72h2.03c-.36.82-.9,1.47-1.63,1.93-.73.47-1.54.71-2.44.71-.65,0-1.21-.12-1.69-.38-.48-.25-.85-.61-1.11-1.07-.26-.46-.39-.99-.39-1.61,0-.27.02-.54.07-.8.13-.74.41-1.42.84-2h-.01Z" style="fill: #fff;"/> <path d="M112.01,83.19h-2.82l-.69,1.34h-1.93l4.07-7.57h2.14l1.4,7.57h-1.95l-.22-1.34h0ZM111.8,81.79l-.45-2.8-1.44,2.8h1.89Z" style="fill: #fff;"/> <path d="M120.91,80.6c-.26.36-.63.66-1.08.88-.46.23-.99.34-1.61.34h-1.15l-.49,2.71h-1.85l1.34-7.57h2.98c.79,0,1.39.18,1.79.53.4.35.61.82.61,1.42,0,.18-.01.34-.04.5-.07.44-.24.84-.5,1.2h0ZM119.54,79.39c.01-.12.02-.2.02-.25,0-.23-.07-.41-.22-.53-.15-.12-.37-.19-.67-.19h-1l-.34,1.94h.99c.69,0,1.09-.32,1.22-.97h0Z" style="fill: #fff;"/> <path d="M124.43,84.06c-.51-.36-.77-.86-.77-1.52,0-.07,0-.16.02-.29h1.92c-.02.27.04.49.2.65s.38.24.69.24c.28,0,.5-.06.66-.18s.24-.29.24-.52-.1-.42-.31-.56c-.2-.15-.53-.31-.96-.49-.42-.18-.76-.34-1.02-.49-.26-.15-.49-.36-.69-.63s-.29-.6-.29-1c0-.5.12-.93.36-1.29s.6-.65,1.04-.84.96-.29,1.53-.29c.52,0,.98.08,1.38.24.4.16.72.39.94.7.23.31.34.66.34,1.09,0,.11,0,.19,0,.24h-1.96s0-.07,0-.13c0-.2-.07-.36-.21-.49s-.34-.19-.58-.19c-.26,0-.47.07-.63.19-.16.12-.24.3-.24.51s.1.39.3.55c.2.15.51.32.94.51.42.2.77.37,1.04.54s.5.39.69.66c.2.28.29.61.29,1.02,0,.45-.12.85-.36,1.2-.23.35-.58.63-1.02.82-.45.2-.96.3-1.56.3-.82,0-1.49-.18-2-.53v-.02Z" style="fill: #fff;"/> <path d="M133.01,76.96l-.8,4.52c-.03.19-.04.31-.04.39,0,.33.09.58.28.76.19.18.47.26.83.26.43,0,.78-.12,1.06-.36s.45-.59.53-1.04l.8-4.52h1.85l-.8,4.52c-.12.69-.36,1.26-.73,1.73-.36.47-.8.82-1.33,1.05-.52.23-1.09.34-1.7.34-.79,0-1.43-.2-1.91-.61s-.73-1-.73-1.78c0-.23.02-.47.07-.73l.79-4.52h1.85,0Z" style="fill: #fff;"/> <path d="M143.41,77.49c.41.36.61.82.61,1.39,0,.17-.01.32-.04.47-.09.5-.31.95-.66,1.35s-.82.68-1.42.84l1.22,3h-2.08l-1.07-2.86h-.45l-.51,2.86h-1.85l1.34-7.57h3.09c.78,0,1.38.18,1.79.53h.01ZM142.11,79.19c0-.23-.07-.41-.22-.53-.15-.12-.36-.19-.65-.19h-1.15l-.34,1.9h1.14c.34,0,.61-.08.8-.25s.33-.4.39-.7c.01-.12.02-.19.02-.23Z" style="fill: #fff;"/> <path d="M148.26,83.12h2.42l-.25,1.4h-4.26l1.34-7.57h1.85l-1.09,6.17h0Z" style="fill: #fff;"/> <path d="M153.96,78.41l-.27,1.58h2.47l-.25,1.39h-2.47l-.3,1.69h2.79l-.26,1.45h-4.63l1.34-7.57h4.63l-.26,1.45h-2.8Z" style="fill: #fff;"/> <path d="M165.09,76.96l-.26,1.45h-3.09l-.28,1.63h2.31l-.26,1.4h-2.31l-.54,3.09h-1.85l1.34-7.57h4.93Z" style="fill: #fff;"/> <path d="M169.4,83.19h-2.82l-.69,1.34h-1.93l4.08-7.57h2.14l1.4,7.57h-1.95l-.22-1.34ZM169.19,81.79l-.45-2.8-1.44,2.8h1.89Z" style="fill: #fff;"/> <path d="M178.35,77.49c.41.36.61.82.61,1.39,0,.17-.01.32-.04.47-.09.5-.31.95-.66,1.35-.35.39-.82.68-1.42.84l1.22,3h-2.08l-1.07-2.86h-.45l-.5,2.86h-1.85l1.34-7.57h3.09c.78,0,1.38.18,1.79.53h0ZM177.06,79.19c0-.23-.07-.41-.22-.53-.15-.12-.36-.19-.65-.19h-1.15l-.34,1.9h1.15c.34,0,.61-.08.8-.25.2-.17.33-.4.38-.7.01-.12.02-.19.02-.23Z" style="fill: #fff;"/> <path d="M192.86,76.96l-3.31,7.57h-2.23l-.34-4.97-2.12,4.97h-2.23l-.58-7.57h1.97l.12,5.51,2.32-5.51h2.04l.32,5.48,2.06-5.48h2Z" style="fill: #fff;"/> <path d="M195.1,78.41l-.27,1.58h2.47l-.25,1.39h-2.47l-.3,1.69h2.79l-.26,1.45h-4.63l1.34-7.57h4.63l-.26,1.45h-2.8Z" style="fill: #fff;"/> <path d="M198.75,84.06c-.51-.36-.77-.86-.77-1.52,0-.07,0-.16.02-.29h1.92c-.02.27.04.49.2.65s.38.24.69.24c.28,0,.5-.06.66-.18s.24-.29.24-.52-.1-.42-.31-.56c-.2-.15-.53-.31-.96-.49-.42-.18-.76-.34-1.02-.49s-.49-.36-.69-.63-.29-.6-.29-1c0-.5.12-.93.36-1.29s.6-.65,1.04-.84.96-.29,1.53-.29c.52,0,.98.08,1.38.24s.72.39.94.7c.22.31.34.66.34,1.09,0,.11,0,.19,0,.24h-1.96s0-.07,0-.13c0-.2-.07-.36-.21-.49s-.34-.19-.58-.19c-.26,0-.47.07-.63.19s-.24.3-.24.51.1.39.3.55c.2.15.51.32.94.51.42.2.77.37,1.04.54s.5.39.69.66c.2.28.29.61.29,1.02,0,.45-.12.85-.36,1.2s-.58.63-1.02.82c-.45.2-.97.3-1.56.3-.82,0-1.49-.18-2-.53v-.02Z" style="fill: #fff;"/> <path d="M210.97,76.96l-.25,1.45h-2.01l-1.08,6.11h-1.85l1.08-6.11h-2.01l.26-1.45h5.86Z" style="fill: #fff;"/> </g> </g> <path d="M52.11,22.1h0c-9.6,1.53-18.66,15.98-20.39,32.75-1.15,11.08,1.2,21.06,6.16,26.04,2.39,2.42,5.28,3.52,8.38,3.23,8.65-.85,17.01-12.35,20.11-26.78.42-1.97.74-4.01.96-6.07.04-.33.07-.66.09-.99s.32-.61.66-.6c1.36.04,2.71-.01,4.04-.15,6.33-.68,10.68-3.05,15.11-7.97.28-.31.58-.65.87-1.01.17-.2.51-.11.54.15.45,3.32.58,6.74.39,10.18-1.41,25.88-20.18,48.13-41.83,49.58-.74.05-1.47.08-2.2.08-8.43,0-16.34-3.28-22.49-9.37-8.45-8.35-12.86-21.14-12.11-35.06C11.81,30.24,30.57,7.99,52.24,6.53c2.93-.19,5.79,0,8.54.55-4.21,4.83-.28,11.57-.28,11.57-.79-5.04,1.05-7.97,3.05-9.62.59-.49,1.26-.88,1.95-1.2l.1-.05.28-.13c6.48-2.54,11.21-3.04,11.21-3.04l-4.83,6.2-.7.9s.02.02.04.03c.23-.27.53-.58.85-.93,0,0,.01,0,.02.01,2.34-2.56,5.45-4.98,7.68-6.08,3.33-1.64,7.23-2.59,9.84-.59,4.64,3.55,7.45,12.42,7.45,12.42,0,0-4.7,6.76-13.11,10.67-2.93,1.36-6.24,2.5-9.85,3.09-8.15,1.32-10.73-8.54-19.84-8.59-.83,0-1.66.1-2.48.32-.02,0-.05,0-.08.02h.01Z" style="fill: #fff;"/> <path d="M94.89,22.37c-1.57,2.49-5.01,9.08-9.43,13.87s-8.78,7.28-15.12,7.96c-10.55,1.12-23.22-3.71-25.02-9.56-1.71-5.52,7.05-11.84,13.25-9.08,5.06,2.25,8.69,10.06,19.28,6.75,10.38-3.24,16.82-9.7,17.04-9.94h0Z" style="fill: #fff;"/> </g> <path d="M106.87,16.62c-7.57,5-14.2,13.43-14.4,13.69.15-.4,8.65-21.81,15.97-22.88,7.39-1.08,4.99,4.86-1.57,9.19h0Z" style="fill: #fff;"/> </svg></div>
+    <div>
+      <div class="ui-shell-title">Générateur de rapport journalier — O'Fun Park</div>
+      <div class="ui-shell-subtitle">Glissez votre fichier <code>STATS_OFUN_SAISON_*.xlsx</code>, puis sélectionnez un jour à présenter en Codir.</div>
+    </div>
+  </div>
+
+  <div class="file-drop" id="dropZone" role="button" tabindex="0">
+    <div class="file-drop-text">Glisser-déposer le fichier ici, ou <strong>cliquer pour sélectionner</strong></div>
+    <div class="file-drop-name" id="fileName"></div>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
+
+  <div class="form-block">
+    <div class="form-block-title">📅 Jour à présenter</div>
+    <div class="ui-controls">
+      <label for="daySelect">Jour :</label>
+      <select id="daySelect" disabled>
+        <option value="">— Charger un fichier d'abord —</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-block">
+    <div class="form-block-title">📷 Version du rapport (photos)</div>
+    <div class="ui-controls">
+      <div class="version-radio">
+        <label><input type="radio" name="version" id="radioCommission" checked disabled> Commission perçue (par défaut)</label>
+        <label><input type="radio" name="version" id="radioTotalPhotos" disabled> Total des ventes photos</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="ui-actions">
+    <button class="primary" id="btnPrint" disabled>Imprimer / Exporter PDF</button>
+    <button class="secondary" id="btnReset" disabled>Recommencer</button>
+  </div>
+
+  <div class="log-zone empty" id="logZone"></div>
+</div>
+
+<!-- ============ Rapport (pages générées dynamiquement) ============ -->
+<div class="report-container" id="reportContainer"></div>
+
+<script>
+
+// Couleurs O'Fun
+const COLOR_BRAND = "#7b170f";
+const COLOR_GOLD  = "#c98a40";
+const COLOR_BLUE  = "#4a6d8c";
+const COLOR_GREEN = "#1d9e75";
+
+// Palette zones
+const ZONE_COLORS = {
+  "ENTREE": "#7b170f",
+  "EXPLORER CAMP": "#c98a40",
+  "RUSH WATER": "#4a6d8c",
+  "SILVER LAKE": "#5fb898",
+  "PHOTO": "#a05030",
+};
+
+// Palette catégories PDV (telles que dans le fichier)
+const CAT_COLORS = {
+  "GUICHET": "#7b170f",
+  "RESTAU": "#c98a40",
+  "SNACK": "#4a6d8c",
+  "BOUTIQUE": "#1d9e75",
+  "GANTS": "#a05030",
+  "CASIER": "#7a99b3",
+  "BILLES PAINTBALL": "#5fb898",
+  "PHOTO TOTAL": "#cca09c",
+};
+
+// Catégories visiteurs
+const VISITOR_COLORS = {
+  "Adulte": "#7b170f",
+  "Enfant": "#c98a40",
+  "Bout chou": "#e8d4a8",
+  "Sénior": "#4a6d8c",
+  "PMR": "#1d9e75",
+  "Gratuit": "#888780",
+};
+
+// Colonnes d'intérêt dans la feuille
+// (indices 0-based)
+const COL = {
+  PDV: 1, CAT: 2, ZONE: 3,
+  CA_N: 4, CA_N1: 5, EVOL: 6,
+  FREQ_TOTAL_N: 7,
+  ADULTE_N: 8,    ADULTE_PCT_N: 9,
+  ENFANT_N: 10,   ENFANT_PCT_N: 11,
+  BOUTCHOU_N: 12, BOUTCHOU_PCT_N: 13,
+  SENIOR_N: 14,   SENIOR_PCT_N: 15,
+  PMR_N: 16,      PMR_PCT_N: 17,
+  GRATUIT_N: 18,  GRATUIT_PCT_N: 19,
+  PANIER_N: 20, PANIER_N1: 21,
+  FREQ_TOTAL_N1: 24,
+  ADULTE_N1: 25, ENFANT_N1: 27, BOUTCHOU_N1: 29,
+  SENIOR_N1: 31, GRATUIT_N1: 33,
+  // Groupes : AK=36=N-1 (2025), AL=37=N (2026)
+  GROUPES_N1: 36, GROUPES_N: 37,
+};
+
+// Mois en français
+const MOIS_FR = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+const JOURS_FR = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
+
+
+// ============================================
+// Helpers
+// ============================================
+const fmtMoney = (n, dec = 2) => {
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  return new Intl.NumberFormat("fr-FR", { minimumFractionDigits: dec, maximumFractionDigits: dec }).format(n) + " €";
+};
+const fmtMoneyK = (n) => {
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  if (Math.abs(n) >= 1000) return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(n / 1000) + "k";
+  return Math.round(n).toString();
+};
+const fmtPct = (n, dec = 1) => {
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  const sign = n > 0 ? "+" : "";
+  return sign + new Intl.NumberFormat("fr-FR", { minimumFractionDigits: dec, maximumFractionDigits: dec }).format(n) + " %";
+};
+const fmtNum = (n) => {
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  return new Intl.NumberFormat("fr-FR").format(Math.round(n));
+};
+const pctEvol = (n, n1) => (n1 ? (n - n1) / n1 * 100 : null);
+
+const num = (v) => {
+  if (v === null || v === undefined) return 0;
+  if (typeof v === "number") return Number.isNaN(v) ? 0 : v;
+  const s = String(v).replace(/\s/g, "").replace(",", ".");
+  const f = parseFloat(s);
+  return Number.isNaN(f) ? 0 : f;
+};
+
+// Parse JJMMAA ou JJMMAAAA → Date
+function parseSheetDate(name) {
+  const m = name.match(/^(\d{2})(\d{2})(\d{2,4})$/);
+  if (!m) return null;
+  const day = parseInt(m[1], 10);
+  const month = parseInt(m[2], 10);
+  let year = parseInt(m[3], 10);
+  if (year < 100) year += 2000;
+  const dt = new Date(year, month - 1, day);
+  if (Number.isNaN(dt.getTime())) return null;
+  return dt;
+}
+
+// Format date FR
+const fmtDateLong = (d) => `${capitalize(JOURS_FR[d.getDay()])} ${d.getDate()} ${MOIS_FR[d.getMonth()]} ${d.getFullYear()}`;
+const fmtDateShort = (d) => `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
+const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const badge = (p) => {
+  if (p === null || p === undefined || Number.isNaN(p)) return '<span class="badge neutral">—</span>';
+  if (p > 0) return `<span class="badge up">▲ ${fmtPct(p)}</span>`;
+  if (p < 0) return `<span class="badge down">▼ ${fmtPct(p)}</span>`;
+  return '<span class="badge neutral">0,0 %</span>';
+};
+
+
+// ============================================
+// PARSE : extrait les données brutes d'un onglet
+// Retourne { a1, pdvs: [{pdv, cat, zone, ca_n, ca_n1, ...}], lignes brutes }
+// ============================================
+function parseSheet(workbook, sheetName) {
+  const sheet = workbook.Sheets[sheetName];
+  if (!sheet) return null;
+  const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: true });
+  if (aoa.length < 21) return null;  // au moins 21 lignes attendues
+
+  const a1 = aoa[0] ? aoa[0][0] : null;
+
+  // Lignes 2 à 21 (indices 1 à 20)
+  const pdvs = [];
+  for (let i = 1; i <= 19; i++) {  // points de vente L2 à L20
+    const r = aoa[i] || [];
+    pdvs.push({
+      idx: i,
+      pdv: r[COL.PDV] ? String(r[COL.PDV]) : "",
+      cat: r[COL.CAT] ? String(r[COL.CAT]) : "",
+      zone: r[COL.ZONE] ? String(r[COL.ZONE]) : "",
+      ca_n: num(r[COL.CA_N]),
+      ca_n1: num(r[COL.CA_N1]),
+    });
+  }
+
+  // Ligne 21 (index 20) = TOTAL
+  const totalRow = aoa[20] || [];
+  const ca_total_n = num(totalRow[COL.CA_N]);
+  const ca_total_n1 = num(totalRow[COL.CA_N1]);
+
+  // Lignes 19 (idx 18) et 20 (idx 19) : photos
+  const photo_total_n = num(aoa[18][COL.CA_N]);
+  const photo_retro_n = num(aoa[19][COL.CA_N]);
+
+  // Fréquentation L1 (idx 1) - TOTAL
+  const freq_btoc_n  = num(aoa[1][COL.FREQ_TOTAL_N]);
+  const freq_btoc_n1 = num(aoa[1][COL.FREQ_TOTAL_N1]);
+
+  // Catégories visiteurs : L2 (idx 1) + L3 (idx 2)
+  const freq_cat_n = {
+    "Adulte":    num(aoa[1][COL.ADULTE_N])    + num(aoa[2][COL.ADULTE_N]),
+    "Enfant":    num(aoa[1][COL.ENFANT_N])    + num(aoa[2][COL.ENFANT_N]),
+    "Bout chou": num(aoa[1][COL.BOUTCHOU_N])  + num(aoa[2][COL.BOUTCHOU_N]),
+    "Sénior":    num(aoa[1][COL.SENIOR_N])    + num(aoa[2][COL.SENIOR_N]),
+    "PMR":       num(aoa[1][COL.PMR_N])       + num(aoa[2][COL.PMR_N]),
+    "Gratuit":   num(aoa[1][COL.GRATUIT_N])   + num(aoa[2][COL.GRATUIT_N]),
+  };
+  const freq_cat_n1 = {
+    "Adulte":    num(aoa[1][COL.ADULTE_N1])   + num(aoa[2][COL.ADULTE_N1]),
+    "Enfant":    num(aoa[1][COL.ENFANT_N1])   + num(aoa[2][COL.ENFANT_N1]),
+    "Bout chou": num(aoa[1][COL.BOUTCHOU_N1]) + num(aoa[2][COL.BOUTCHOU_N1]),
+    "Sénior":    num(aoa[1][COL.SENIOR_N1])   + num(aoa[2][COL.SENIOR_N1]),
+    "Gratuit":   num(aoa[1][COL.GRATUIT_N1])  + num(aoa[2][COL.GRATUIT_N1]),
+  };
+
+  // Groupes : L2/L3/L4 cols AK (N-1) et AL (N)
+  const groupes = {
+    reserves_n:    num(aoa[1][COL.GROUPES_N]),
+    reserves_n1:   num(aoa[1][COL.GROUPES_N1]),
+    surplace_n:    num(aoa[2][COL.GROUPES_N]),
+    surplace_n1:   num(aoa[2][COL.GROUPES_N1]),
+    total_n:       num(aoa[3][COL.GROUPES_N]),
+    total_n1:      num(aoa[3][COL.GROUPES_N1]),
+  };
+
+  return {
+    sheet: sheetName,
+    a1: a1 ? String(a1) : null,
+    pdvs,
+    ca_total_n, ca_total_n1,
+    photo_total_n, photo_retro_n,
+    freq_btoc_n, freq_btoc_n1,
+    freq_cat_n, freq_cat_n1,
+    groupes,
+  };
+}
+
+
+// ============================================
+// COMPUTE : enrichit un jour parsé avec calculs dérivés
+// ============================================
+function computeDay(raw, version) {
+  // version = "commission" ou "total_photos"
+  const ca_total_n_commission = raw.ca_total_n;
+  const ca_total_n_total_photo = raw.ca_total_n - raw.photo_retro_n + raw.photo_total_n;
+  const ca_total_n = version === "commission" ? ca_total_n_commission : ca_total_n_total_photo;
+
+  // Répartitions par zone et catégorie de PDV (hors lignes photos)
+  const byZoneN = {}, byCatN = {};
+  const byZoneN1 = {}, byCatN1 = {};
+  for (const p of raw.pdvs) {
+    if (p.pdv.includes("PHOTO VENDUES")) continue;
+    if (p.zone && p.zone !== "nan") {
+      byZoneN[p.zone]  = (byZoneN[p.zone]  || 0) + p.ca_n;
+      byZoneN1[p.zone] = (byZoneN1[p.zone] || 0) + p.ca_n1;
+    }
+    if (p.cat && p.cat !== "nan") {
+      byCatN[p.cat]  = (byCatN[p.cat]  || 0) + p.ca_n;
+      byCatN1[p.cat] = (byCatN1[p.cat] || 0) + p.ca_n1;
+    }
+  }
+  // Ajout PHOTO selon la version
+  const photoVal = version === "total_photos" ? raw.photo_total_n : raw.photo_retro_n;
+  byZoneN["PHOTO"]      = (byZoneN["PHOTO"] || 0) + photoVal;
+  byCatN["PHOTO TOTAL"] = (byCatN["PHOTO TOTAL"] || 0) + photoVal;
+  // N-1 toujours en commission (pas de delta photo applicable)
+  byZoneN1["PHOTO"]      = byZoneN1["PHOTO"]      || 0;
+  byCatN1["PHOTO TOTAL"] = byCatN1["PHOTO TOTAL"] || 0;
+
+  // Panier moyen global
+  const panier_n  = raw.freq_btoc_n  ? ca_total_n / raw.freq_btoc_n   : 0;
+  const panier_n1 = raw.freq_btoc_n1 ? raw.ca_total_n1 / raw.freq_btoc_n1 : 0;
+
+  return {
+    ...raw,
+    version,
+    ca_total_n,
+    ca_total_n_commission,
+    ca_total_n_total_photo,
+    byZoneN, byCatN, byZoneN1, byCatN1,
+    panier_n, panier_n1,
+  };
+}
+
+// ============================================
+// COMPUTE : cumul saison
+// allDays = { sheetName: rawDay, ... }
+// datedSheets = [{sheet, date}, ...] triés croissant
+// ============================================
+function computeCumul(allDays, datedSheets, currentSheet, version) {
+  const idxCurrent = datedSheets.findIndex(s => s.sheet === currentSheet);
+  if (idxCurrent < 0) return null;
+  const subset = datedSheets.slice(0, idxCurrent + 1);
+
+  const cumul = {
+    ca_n_commission: 0, ca_n_total_photo: 0, ca_n1: 0,
+    photo_total_n: 0, photo_retro_n: 0,
+    freq_btoc_n: 0, freq_btoc_n1: 0,
+    groupes_resa_n: 0, groupes_resa_n1: 0,
+    groupes_surplace_n: 0, groupes_surplace_n1: 0,
+    groupes_total_n: 0, groupes_total_n1: 0,
+    days_analyzed: subset.length, days_open_n: 0,
+    by_cat_n: {}, by_cat_n1: {},
+    by_zone_n: {}, by_zone_n1: {},
+    freq_cat_n: {"Adulte":0,"Enfant":0,"Bout chou":0,"Sénior":0,"PMR":0,"Gratuit":0},
+    freq_cat_n1: {"Adulte":0,"Enfant":0,"Bout chou":0,"Sénior":0,"Gratuit":0},
+  };
+
+  for (const {sheet} of subset) {
+    const raw = allDays[sheet];
+    if (!raw) continue;
+
+    const ca_n_commission = raw.ca_total_n;
+    const ca_n_total_photo = raw.ca_total_n - raw.photo_retro_n + raw.photo_total_n;
+    cumul.ca_n_commission += ca_n_commission;
+    cumul.ca_n_total_photo += ca_n_total_photo;
+    cumul.ca_n1 += raw.ca_total_n1;
+    cumul.photo_total_n += raw.photo_total_n;
+    cumul.photo_retro_n += raw.photo_retro_n;
+
+    cumul.freq_btoc_n  += raw.freq_btoc_n;
+    cumul.freq_btoc_n1 += raw.freq_btoc_n1;
+
+    if (ca_n_commission > 0) cumul.days_open_n++;
+
+    cumul.groupes_resa_n      += raw.groupes.reserves_n;
+    cumul.groupes_resa_n1     += raw.groupes.reserves_n1;
+    cumul.groupes_surplace_n  += raw.groupes.surplace_n;
+    cumul.groupes_surplace_n1 += raw.groupes.surplace_n1;
+    cumul.groupes_total_n     += raw.groupes.total_n;
+    cumul.groupes_total_n1    += raw.groupes.total_n1;
+
+    // Cat visiteurs
+    for (const k of Object.keys(cumul.freq_cat_n))  cumul.freq_cat_n[k]  += raw.freq_cat_n[k]  || 0;
+    for (const k of Object.keys(cumul.freq_cat_n1)) cumul.freq_cat_n1[k] += raw.freq_cat_n1[k] || 0;
+
+    // CA par catégorie/zone (hors photos)
+    for (const p of raw.pdvs) {
+      if (p.pdv.includes("PHOTO VENDUES")) continue;
+      if (p.zone && p.zone !== "nan") {
+        cumul.by_zone_n[p.zone]  = (cumul.by_zone_n[p.zone]  || 0) + p.ca_n;
+        cumul.by_zone_n1[p.zone] = (cumul.by_zone_n1[p.zone] || 0) + p.ca_n1;
+      }
+      if (p.cat && p.cat !== "nan") {
+        cumul.by_cat_n[p.cat]  = (cumul.by_cat_n[p.cat]  || 0) + p.ca_n;
+        cumul.by_cat_n1[p.cat] = (cumul.by_cat_n1[p.cat] || 0) + p.ca_n1;
+      }
+    }
+    // Photo selon version
+    const photoVal = version === "total_photos" ? raw.photo_total_n : raw.photo_retro_n;
+    cumul.by_zone_n["PHOTO"]      = (cumul.by_zone_n["PHOTO"]      || 0) + photoVal;
+    cumul.by_cat_n["PHOTO TOTAL"] = (cumul.by_cat_n["PHOTO TOTAL"] || 0) + photoVal;
+  }
+
+  cumul.ca_n = version === "commission" ? cumul.ca_n_commission : cumul.ca_n_total_photo;
+  cumul.panier_n  = cumul.freq_btoc_n  ? cumul.ca_n  / cumul.freq_btoc_n   : 0;
+  cumul.panier_n1 = cumul.freq_btoc_n1 ? cumul.ca_n1 / cumul.freq_btoc_n1 : 0;
+
+  return cumul;
+}
+
+
+function renderDonut(items, colorMap, size = 160) {
+  const entries = Object.entries(items).filter(([k, v]) => v > 0);
+  const total = entries.reduce((s, [, v]) => s + v, 0);
+  if (total === 0) return "";
+  const cx = size/2, cy = size/2, r = size/2 - 4, rIn = r * 0.55;
+  let segs = "", startA = -90;
+  for (const [label, val] of entries) {
+    const sweep = val / total * 360;
+    const endA = startA + sweep;
+    const rad = (a) => a * Math.PI / 180;
+    const x1 = cx + r * Math.cos(rad(startA));
+    const y1 = cy + r * Math.sin(rad(startA));
+    const x2 = cx + r * Math.cos(rad(endA));
+    const y2 = cy + r * Math.sin(rad(endA));
+    const xi1 = cx + rIn * Math.cos(rad(startA));
+    const yi1 = cy + rIn * Math.sin(rad(startA));
+    const xi2 = cx + rIn * Math.cos(rad(endA));
+    const yi2 = cy + rIn * Math.sin(rad(endA));
+    const large = sweep > 180 ? 1 : 0;
+    const col = colorMap[label] || "#aaa";
+    segs += `<path d="M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} L ${xi2.toFixed(2)} ${yi2.toFixed(2)} A ${rIn} ${rIn} 0 ${large} 0 ${xi1.toFixed(2)} ${yi1.toFixed(2)} Z" fill="${col}"/>`;
+    startA = endA;
+  }
+  return `<svg viewBox="0 0 ${size} ${size}" style="width:${size}px;height:${size}px">${segs}</svg>`;
+}
+
+function renderCompareBars(valN1, valN, isMoney = false) {
+  const maxV = Math.max(valN1 || 0, valN || 0, 1);
+  const h1 = (valN1 || 0) / maxV * 50;
+  const h2 = (valN  || 0) / maxV * 50;
+  const fmt = isMoney ? fmtMoneyK : (v) => fmtNum(v);
+  return `<svg viewBox="0 0 240 90" style="width:100%;height:90px">
+    <text x="120" y="10" font-size="9" fill="#888780" text-anchor="middle">N-1 vs N</text>
+    <rect x="40" y="${73 - h1}" width="60" height="${h1}" fill="#cca09c"/>
+    <rect x="140" y="${73 - h2}" width="60" height="${h2}" fill="${COLOR_BRAND}"/>
+    <text x="70" y="86" font-size="10" fill="#5f5e5a" text-anchor="middle">N-1</text>
+    <text x="170" y="86" font-size="10" fill="#5f5e5a" text-anchor="middle">N</text>
+    <text x="70" y="${68 - h1}" font-size="9" fill="#5f5e5a" text-anchor="middle">${fmt(valN1)}</text>
+    <text x="170" y="${68 - h2}" font-size="9" fill="${COLOR_BRAND}" text-anchor="middle" font-weight="500">${fmt(valN)}</text>
+  </svg>`;
+}
+
+
+const LOGO_SVG = `<svg id="Calque_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 222 103"> <g> <g> <g> <path d="M103.89,29.39c.53.41,1.05.7,1.63.88.58.18,1.11.53,1.63.99.53.47.76,1.11.76,1.87s-4.08,31.81-4.08,32.22c0,.93.35,1.58,1.05,1.93s1.87.53,3.51.53h.23c1.75,0,3.04-.23,3.86-.7.82-.47,1.28-1.28,1.46-2.39l1.97-14.62,8.89-.11c1.52,0,2.58-.35,3.16-1.05s.88-1.93.88-3.74c0-1.05-.53-1.58-1.63-1.58-.35,0-1.58.06-3.68.18-2.1.12-5.74.28-6.91.28l1.4-11.16c.18-1.11.41-1.81.76-2.16.35-.35,1.17-.53,2.45-.53h2.15c1.63,0,2.69.23,3.16.64.47.41.88,1.52,1.28,3.33.29,1.52.64,2.57,1.05,3.09s.93.82,1.58.82c1.46,0,2.57-1.23,3.33-3.74.76-2.51,1.11-5.03,1.11-7.54,0-.88-.23-1.58-.64-2.04-.41-.47-1.17-.7-2.22-.76-2.74-.18-4.13-.29-9.45-.29-4.76,0-14.04.34-14.37.35-2.22.12-3.63.41-4.21.82s-.88,1.4-.88,2.92c0,.64.23,1.17.76,1.58h0Z" style="fill: #fff;"/> <path d="M136.66,41.57c.53.42,1.07.71,1.66.89.59.18,1.13.53,1.66,1.01s.77,1.13.77,1.9c0,.42-.42,2.85-1.25,7.24-.83,4.39-1.25,7.3-1.25,8.73,0,2.08.59,3.68,1.72,4.81s2.79,1.66,4.98,1.66c0,0,3.28.34,7.06-2.31,2.04-1.42,3.79-3.32,5.16-5.93-.18,1.36-.3,2.25-.3,2.67,0,3.5,1.9,5.28,5.64,5.28,2.5,0,4.81-.72,7.01-2.08s3.26-3.09,3.26-5.17c0-.65-.12-1.25-.36-1.72s-.47-.72-.72-.72c-.06,0-.53.12-1.36.3-.83.18-1.48.3-1.96.3-.72,0-1.07-.36-1.07-1.13,0-.59.36-3.86,1.12-9.79.77-5.93,1.13-9.02,1.13-9.32,0-.89-.36-1.54-1.07-1.9-.72-.36-1.9-.53-3.62-.53-1.84,0-3.14.24-3.98.71-.83.47-1.31,1.31-1.48,2.44l-1.31,10.97c-.36,2.91-1.25,5.34-2.67,7.3s-3.09,2.97-4.98,2.97c-1.25,0-1.9-.77-1.9-2.31,0-1.13.47-4.33,1.42-9.55.95-5.22,1.42-8.37,1.42-9.43,0-1.12-.47-1.9-1.42-2.37-.95-.47-2.85-.71-5.64-.71-2.55,0-4.45.18-5.63.47-1.19.3-1.96.72-2.31,1.25-.36.53-.53,1.36-.53,2.5,0,.65.23,1.19.77,1.61h-.01Z" style="fill: #fff;"/> <path d="M174.17,41.92c.53.42,1.07.72,1.66.89.59.18,1.12.53,1.66,1.01.53.47.77,1.12.77,1.9,0,.59-.42,3.98-1.19,10.08-.77,6.11-1.19,9.38-1.19,9.73,0,.95.36,1.6,1.07,1.96.72.36,1.9.53,3.5.53,0,0,2.56,0,4.28-.95.84-.47,1.31-1.31,1.48-2.44l1.07-9.02c.42-3.38,1.36-6.17,2.91-8.37,1.54-2.2,3.14-3.32,4.87-3.32.77,0,1.36.24,1.78.72.42.47.59,1.36.59,2.61,0,.95-.3,3.39-.83,7.36-.53,3.98-.83,6.53-.83,7.71,0,1.66.47,2.97,1.42,3.98s2.31,1.48,4.15,1.48c2.44,0,4.69-.72,6.82-2.2,2.14-1.48,3.2-3.14,3.2-4.98,0-.66-.12-1.25-.36-1.72s-.47-.72-.72-.72c-.06,0-.47.12-1.25.3-.77.18-1.36.3-1.78.3-.72,0-1.07-.36-1.07-1.12,0-.3.24-2.31.72-6.06.47-3.74.72-6.23.72-7.48,0-5.34-2.31-8.01-6.95-8.01-2.37,0-4.68.72-6.88,2.14-2.2,1.42-4.09,3.62-5.7,6.59.42-3.14.59-5.04.59-5.64,0-1.13-.47-1.9-1.42-2.37s-2.73-.72-5.28-.72-4.45.18-5.7.47c-1.25.3-2.02.72-2.37,1.25-.36.53-.53,1.36-.53,2.5,0,.66.24,1.19.77,1.61h0Z" style="fill: #fff;"/> </g> <g> <path d="M100.32,78.73c.43-.58.96-1.04,1.59-1.37s1.31-.49,2.05-.49c.9,0,1.63.24,2.18.71.55.47.87,1.12.94,1.94h-2.03c-.09-.31-.26-.55-.51-.71s-.55-.24-.91-.24c-.57,0-1.06.2-1.47.59s-.69.91-.8,1.57c-.04.2-.05.38-.05.53,0,.5.14.9.42,1.2.28.29.66.45,1.15.45.35,0,.68-.08.99-.25s.56-.4.77-.72h2.03c-.36.82-.9,1.47-1.63,1.93-.73.47-1.54.71-2.44.71-.65,0-1.21-.12-1.69-.38-.48-.25-.85-.61-1.11-1.07-.26-.46-.39-.99-.39-1.61,0-.27.02-.54.07-.8.13-.74.41-1.42.84-2h-.01Z" style="fill: #fff;"/> <path d="M112.01,83.19h-2.82l-.69,1.34h-1.93l4.07-7.57h2.14l1.4,7.57h-1.95l-.22-1.34h0ZM111.8,81.79l-.45-2.8-1.44,2.8h1.89Z" style="fill: #fff;"/> <path d="M120.91,80.6c-.26.36-.63.66-1.08.88-.46.23-.99.34-1.61.34h-1.15l-.49,2.71h-1.85l1.34-7.57h2.98c.79,0,1.39.18,1.79.53.4.35.61.82.61,1.42,0,.18-.01.34-.04.5-.07.44-.24.84-.5,1.2h0ZM119.54,79.39c.01-.12.02-.2.02-.25,0-.23-.07-.41-.22-.53-.15-.12-.37-.19-.67-.19h-1l-.34,1.94h.99c.69,0,1.09-.32,1.22-.97h0Z" style="fill: #fff;"/> <path d="M124.43,84.06c-.51-.36-.77-.86-.77-1.52,0-.07,0-.16.02-.29h1.92c-.02.27.04.49.2.65s.38.24.69.24c.28,0,.5-.06.66-.18s.24-.29.24-.52-.1-.42-.31-.56c-.2-.15-.53-.31-.96-.49-.42-.18-.76-.34-1.02-.49-.26-.15-.49-.36-.69-.63s-.29-.6-.29-1c0-.5.12-.93.36-1.29s.6-.65,1.04-.84.96-.29,1.53-.29c.52,0,.98.08,1.38.24.4.16.72.39.94.7.23.31.34.66.34,1.09,0,.11,0,.19,0,.24h-1.96s0-.07,0-.13c0-.2-.07-.36-.21-.49s-.34-.19-.58-.19c-.26,0-.47.07-.63.19-.16.12-.24.3-.24.51s.1.39.3.55c.2.15.51.32.94.51.42.2.77.37,1.04.54s.5.39.69.66c.2.28.29.61.29,1.02,0,.45-.12.85-.36,1.2-.23.35-.58.63-1.02.82-.45.2-.96.3-1.56.3-.82,0-1.49-.18-2-.53v-.02Z" style="fill: #fff;"/> <path d="M133.01,76.96l-.8,4.52c-.03.19-.04.31-.04.39,0,.33.09.58.28.76.19.18.47.26.83.26.43,0,.78-.12,1.06-.36s.45-.59.53-1.04l.8-4.52h1.85l-.8,4.52c-.12.69-.36,1.26-.73,1.73-.36.47-.8.82-1.33,1.05-.52.23-1.09.34-1.7.34-.79,0-1.43-.2-1.91-.61s-.73-1-.73-1.78c0-.23.02-.47.07-.73l.79-4.52h1.85,0Z" style="fill: #fff;"/> <path d="M143.41,77.49c.41.36.61.82.61,1.39,0,.17-.01.32-.04.47-.09.5-.31.95-.66,1.35s-.82.68-1.42.84l1.22,3h-2.08l-1.07-2.86h-.45l-.51,2.86h-1.85l1.34-7.57h3.09c.78,0,1.38.18,1.79.53h.01ZM142.11,79.19c0-.23-.07-.41-.22-.53-.15-.12-.36-.19-.65-.19h-1.15l-.34,1.9h1.14c.34,0,.61-.08.8-.25s.33-.4.39-.7c.01-.12.02-.19.02-.23Z" style="fill: #fff;"/> <path d="M148.26,83.12h2.42l-.25,1.4h-4.26l1.34-7.57h1.85l-1.09,6.17h0Z" style="fill: #fff;"/> <path d="M153.96,78.41l-.27,1.58h2.47l-.25,1.39h-2.47l-.3,1.69h2.79l-.26,1.45h-4.63l1.34-7.57h4.63l-.26,1.45h-2.8Z" style="fill: #fff;"/> <path d="M165.09,76.96l-.26,1.45h-3.09l-.28,1.63h2.31l-.26,1.4h-2.31l-.54,3.09h-1.85l1.34-7.57h4.93Z" style="fill: #fff;"/> <path d="M169.4,83.19h-2.82l-.69,1.34h-1.93l4.08-7.57h2.14l1.4,7.57h-1.95l-.22-1.34ZM169.19,81.79l-.45-2.8-1.44,2.8h1.89Z" style="fill: #fff;"/> <path d="M178.35,77.49c.41.36.61.82.61,1.39,0,.17-.01.32-.04.47-.09.5-.31.95-.66,1.35-.35.39-.82.68-1.42.84l1.22,3h-2.08l-1.07-2.86h-.45l-.5,2.86h-1.85l1.34-7.57h3.09c.78,0,1.38.18,1.79.53h0ZM177.06,79.19c0-.23-.07-.41-.22-.53-.15-.12-.36-.19-.65-.19h-1.15l-.34,1.9h1.15c.34,0,.61-.08.8-.25.2-.17.33-.4.38-.7.01-.12.02-.19.02-.23Z" style="fill: #fff;"/> <path d="M192.86,76.96l-3.31,7.57h-2.23l-.34-4.97-2.12,4.97h-2.23l-.58-7.57h1.97l.12,5.51,2.32-5.51h2.04l.32,5.48,2.06-5.48h2Z" style="fill: #fff;"/> <path d="M195.1,78.41l-.27,1.58h2.47l-.25,1.39h-2.47l-.3,1.69h2.79l-.26,1.45h-4.63l1.34-7.57h4.63l-.26,1.45h-2.8Z" style="fill: #fff;"/> <path d="M198.75,84.06c-.51-.36-.77-.86-.77-1.52,0-.07,0-.16.02-.29h1.92c-.02.27.04.49.2.65s.38.24.69.24c.28,0,.5-.06.66-.18s.24-.29.24-.52-.1-.42-.31-.56c-.2-.15-.53-.31-.96-.49-.42-.18-.76-.34-1.02-.49s-.49-.36-.69-.63-.29-.6-.29-1c0-.5.12-.93.36-1.29s.6-.65,1.04-.84.96-.29,1.53-.29c.52,0,.98.08,1.38.24s.72.39.94.7c.22.31.34.66.34,1.09,0,.11,0,.19,0,.24h-1.96s0-.07,0-.13c0-.2-.07-.36-.21-.49s-.34-.19-.58-.19c-.26,0-.47.07-.63.19s-.24.3-.24.51.1.39.3.55c.2.15.51.32.94.51.42.2.77.37,1.04.54s.5.39.69.66c.2.28.29.61.29,1.02,0,.45-.12.85-.36,1.2s-.58.63-1.02.82c-.45.2-.97.3-1.56.3-.82,0-1.49-.18-2-.53v-.02Z" style="fill: #fff;"/> <path d="M210.97,76.96l-.25,1.45h-2.01l-1.08,6.11h-1.85l1.08-6.11h-2.01l.26-1.45h5.86Z" style="fill: #fff;"/> </g> </g> <path d="M52.11,22.1h0c-9.6,1.53-18.66,15.98-20.39,32.75-1.15,11.08,1.2,21.06,6.16,26.04,2.39,2.42,5.28,3.52,8.38,3.23,8.65-.85,17.01-12.35,20.11-26.78.42-1.97.74-4.01.96-6.07.04-.33.07-.66.09-.99s.32-.61.66-.6c1.36.04,2.71-.01,4.04-.15,6.33-.68,10.68-3.05,15.11-7.97.28-.31.58-.65.87-1.01.17-.2.51-.11.54.15.45,3.32.58,6.74.39,10.18-1.41,25.88-20.18,48.13-41.83,49.58-.74.05-1.47.08-2.2.08-8.43,0-16.34-3.28-22.49-9.37-8.45-8.35-12.86-21.14-12.11-35.06C11.81,30.24,30.57,7.99,52.24,6.53c2.93-.19,5.79,0,8.54.55-4.21,4.83-.28,11.57-.28,11.57-.79-5.04,1.05-7.97,3.05-9.62.59-.49,1.26-.88,1.95-1.2l.1-.05.28-.13c6.48-2.54,11.21-3.04,11.21-3.04l-4.83,6.2-.7.9s.02.02.04.03c.23-.27.53-.58.85-.93,0,0,.01,0,.02.01,2.34-2.56,5.45-4.98,7.68-6.08,3.33-1.64,7.23-2.59,9.84-.59,4.64,3.55,7.45,12.42,7.45,12.42,0,0-4.7,6.76-13.11,10.67-2.93,1.36-6.24,2.5-9.85,3.09-8.15,1.32-10.73-8.54-19.84-8.59-.83,0-1.66.1-2.48.32-.02,0-.05,0-.08.02h.01Z" style="fill: #fff;"/> <path d="M94.89,22.37c-1.57,2.49-5.01,9.08-9.43,13.87s-8.78,7.28-15.12,7.96c-10.55,1.12-23.22-3.71-25.02-9.56-1.71-5.52,7.05-11.84,13.25-9.08,5.06,2.25,8.69,10.06,19.28,6.75,10.38-3.24,16.82-9.7,17.04-9.94h0Z" style="fill: #fff;"/> </g> <path d="M106.87,16.62c-7.57,5-14.2,13.43-14.4,13.69.15-.4,8.65-21.81,15.97-22.88,7.39-1.08,4.99,4.86-1.57,9.19h0Z" style="fill: #fff;"/> </svg>`;
+
+// ============================================
+// Helpers rendering
+// ============================================
+function renderHeader(ctx, pageNum) {
+  const versionLabel = ctx.version === "commission" ? "VERSION COMMISSION PHOTOS" : "VERSION TOTAL PHOTOS";
+  return `
+    <div class="r-header">
+      <div class="r-header-left">
+        <div class="r-logo">${LOGO_SVG}</div>
+        <div>
+          <div class="r-overtitle">RAPPORT JOURNALIER — O'FUN PARK</div>
+          <div class="r-title">${ctx.dateLong}</div>
+          <div class="r-subtitle">${versionLabel}</div>
+        </div>
+      </div>
+      <div class="r-header-right">Page ${pageNum} / 5<br>Présentation Codir</div>
+    </div>`;
+}
+
+function renderFooter(ctx, pageNum) {
+  return `<div class="footer-page">
+    <span>O'Fun Park · Rapport journalier · ${ctx.dateShort}</span>
+    <span>Page ${pageNum} / 5</span>
+  </div>`;
+}
+
+function renderRepartTable(items, colorMap, headers = ["Élément", "CA HT", "%"]) {
+  const total = Object.values(items).reduce((s, v) => s + v, 0);
+  if (total === 0) return `<div style="font-size:11px;color:var(--text-secondary)">Aucune donnée.</div>`;
+  const sortedItems = Object.entries(items).sort((a, b) => b[1] - a[1]).filter(([, v]) => v > 0);
+  let rows = "";
+  for (const [label, val] of sortedItems) {
+    const color = colorMap[label] || "#aaa";
+    const p = val / total * 100;
+    rows += `<tr><td><span class="cat-dot" style="background:${color}"></span>${label}</td><td>${fmtMoney(val)}</td><td>${p.toFixed(1).replace(".",",")} %</td></tr>`;
+  }
+  return `<table class="cat-table">
+    <thead><tr><th>${headers[0]}</th><th>${headers[1]}</th><th>${headers[2]}</th></tr></thead>
+    <tbody>${rows}<tr class="total"><td>Total</td><td>${fmtMoney(total)}</td><td>100,0 %</td></tr></tbody>
+  </table>`;
+}
+
+function renderRepartFreqTable(items, colorMap, total) {
+  if (total === 0) return `<div style="font-size:11px;color:var(--text-secondary)">Aucune donnée.</div>`;
+  const sortedItems = Object.entries(items).sort((a, b) => b[1] - a[1]).filter(([, v]) => v > 0);
+  let rows = "";
+  for (const [label, val] of sortedItems) {
+    const color = colorMap[label] || "#aaa";
+    const p = val / total * 100;
+    rows += `<tr><td><span class="cat-dot" style="background:${color}"></span>${label}</td><td>${Math.round(val)}</td><td>${p.toFixed(1).replace(".",",")} %</td></tr>`;
+  }
+  return `<table class="cat-table">
+    <thead><tr><th>Catégorie</th><th>Qté</th><th>%</th></tr></thead>
+    <tbody>${rows}<tr class="total"><td>Total</td><td>${Math.round(total)}</td><td>100 %</td></tr></tbody>
+  </table>`;
+}
+
+// ============================================
+// PAGE 1
+// ============================================
+function renderPage1(ctx) {
+  const { day, cumul } = ctx;
+  const evolCa  = pctEvol(day.ca_total_n, day.ca_total_n1);
+  const evolFreq = pctEvol(day.freq_btoc_n, day.freq_btoc_n1);
+  const evolPanier = pctEvol(day.panier_n, day.panier_n1);
+  const evolGrp = pctEvol(day.groupes.total_n, day.groupes.total_n1);
+
+  let a1Warning = "";
+  if (day.a1 === "FERME" && day.ca_total_n > 0) {
+    a1Warning = `<div class="r-block" style="background:var(--amber-bg);border-left:3px solid var(--brand-gold);padding:0.6rem 1rem;margin-bottom:0.75rem;">
+      <div style="font-size:12px;"><b>⚠ Cellule A1 = "FERME" dans le fichier source</b> — Il y a pourtant des données ce jour-là. Indicateur à ignorer (non fiable).</div>
+    </div>`;
+  }
+
+  const otherLabel = ctx.version === "commission" ? "Avec total photos" : "Avec commission perçue";
+  const otherVal = ctx.version === "commission" ? day.ca_total_n_total_photo : day.ca_total_n_commission;
+  const otherNote = `<span style="color:var(--text-tertiary)">${otherLabel} : ${fmtMoney(otherVal)} — écart : ${fmtMoney(Math.abs(day.ca_total_n - otherVal))}</span>`;
+
+  return `
+    <div class="page-content">
+      ${renderHeader(ctx, 1)}
+      ${a1Warning}
+
+      <div class="r-section-label">1 — PERFORMANCE DU JOUR</div>
+      <div class="r-block">
+        <div class="perf-row">
+          <div>
+            <div class="perf-label">CA HT total du jour</div>
+            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+              <div class="big-number">${fmtMoney(day.ca_total_n)}</div>
+              ${badge(evolCa)}
+            </div>
+            <div class="perf-meta">N-1 : ${fmtMoney(day.ca_total_n1)} · Écart : ${(day.ca_total_n - day.ca_total_n1) >= 0 ? "+" : ""}${fmtMoney(day.ca_total_n - day.ca_total_n1)}</div>
+            <div class="perf-meta" style="margin-top:6px;">${otherNote}</div>
+          </div>
+          <div>${renderCompareBars(day.ca_total_n1, day.ca_total_n, true)}</div>
+        </div>
+      </div>
+
+      <div class="r-section-label">2 — FRÉQUENTATION DU JOUR</div>
+      <div class="r-block-grid">
+        <div class="r-block boutique-card" style="border-top:3px solid ${COLOR_BRAND};">
+          <div class="boutique-title" style="color:${COLOR_BRAND};">● Entrées BTOC (hors groupes)</div>
+          <div style="display:grid;grid-template-columns:1fr 220px;gap:1rem;align-items:center;">
+            <div>
+              <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+                <div class="big-number mid">${fmtNum(day.freq_btoc_n)} <span style="font-size:14px;color:var(--text-secondary)">entrées</span></div>
+                ${badge(evolFreq)}
+              </div>
+              <div class="perf-meta">N-1 : ${fmtNum(day.freq_btoc_n1)} · Écart : ${(day.freq_btoc_n - day.freq_btoc_n1 >= 0 ? "+" : "")}${day.freq_btoc_n - day.freq_btoc_n1}</div>
+            </div>
+            <div>${renderCompareBars(day.freq_btoc_n1, day.freq_btoc_n)}</div>
+          </div>
+        </div>
+        <div class="r-block boutique-card" style="border-top:3px solid ${COLOR_GOLD};">
+          <div class="boutique-title" style="color:${COLOR_GOLD};">● Groupes</div>
+          <div style="display:grid;grid-template-columns:1fr 220px;gap:1rem;align-items:center;">
+            <div>
+              <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+                <div class="big-number mid">${fmtNum(day.groupes.total_n)} <span style="font-size:14px;color:var(--text-secondary)">personnes</span></div>
+                ${badge(evolGrp)}
+              </div>
+              <div class="perf-meta">N-1 : ${fmtNum(day.groupes.total_n1)}</div>
+              <div class="perf-meta">Ventes en ligne : ${day.groupes.reserves_n} (vs ${day.groupes.reserves_n1}) · Ventes en guichet : ${day.groupes.surplace_n} (vs ${day.groupes.surplace_n1})</div>
+            </div>
+            <div>${renderCompareBars(day.groupes.total_n1, day.groupes.total_n)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="r-section-label">3 — PANIER MOYEN GLOBAL HT</div>
+      <div class="r-block">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;align-items:end;">
+          <div>
+            <div class="kpi-label">Panier moyen N</div>
+            <div class="kpi-value" style="font-size:22px;">${fmtMoney(day.panier_n)}</div>
+            <div class="perf-meta" style="font-size:10px;">CA total ÷ fréquentation BTOC</div>
+          </div>
+          <div>
+            <div class="kpi-label">Panier moyen N-1</div>
+            <div class="kpi-value" style="font-size:22px;">${fmtMoney(day.panier_n1)}</div>
+          </div>
+          <div>
+            <div class="kpi-label">Évolution</div>
+            <div style="font-size:22px;">${badge(evolPanier)}</div>
+            <div class="perf-meta" style="font-size:10px;">Écart : ${(day.panier_n - day.panier_n1 >= 0 ? "+" : "")}${fmtMoney(day.panier_n - day.panier_n1)}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${renderFooter(ctx, 1)}`;
+}
+
+// ============================================
+// PAGE 2 — Répartition CA
+// ============================================
+function renderPage2(ctx) {
+  const { day } = ctx;
+  const freq = day.freq_btoc_n;
+
+  let panierRows = "";
+  const sorted = Object.entries(day.byCatN).sort((a, b) => b[1] - a[1]).filter(([, v]) => v > 0);
+  for (const [cat, ca] of sorted) {
+    const pm = freq ? ca / freq : 0;
+    const color = CAT_COLORS[cat] || "#aaa";
+    panierRows += `<tr><td><span class="cat-dot" style="background:${color}"></span>${cat}</td><td>${fmtMoney(ca)}</td><td>${fmtMoney(pm)}</td></tr>`;
+  }
+  const panierTable = `<table class="cat-table">
+    <thead><tr><th>Catégorie PDV</th><th>CA HT</th><th>Panier moyen</th></tr></thead>
+    <tbody>${panierRows}</tbody>
+  </table>`;
+
+  return `
+    <div class="page-content">
+      ${renderHeader(ctx, 2)}
+
+      <div class="r-section-label">4 — RÉPARTITION DU CA PAR ZONE</div>
+      <div class="r-block">
+        <div class="cat-row">
+          <div>${renderRepartTable(day.byZoneN, ZONE_COLORS)}</div>
+          <div class="donut-wrap">${renderDonut(day.byZoneN, ZONE_COLORS, 160)}</div>
+        </div>
+      </div>
+
+      <div class="r-section-label">5 — RÉPARTITION DU CA PAR CATÉGORIE DE PDV</div>
+      <div class="r-block">
+        <div class="cat-row">
+          <div>${renderRepartTable(day.byCatN, CAT_COLORS, ["Catégorie", "CA HT", "%"])}</div>
+          <div class="donut-wrap">${renderDonut(day.byCatN, CAT_COLORS, 160)}</div>
+        </div>
+      </div>
+
+      <div class="r-section-label">6 — PANIER MOYEN HT PAR CATÉGORIE DE PDV</div>
+      <div class="r-block">
+        ${panierTable}
+        <div class="perf-meta" style="font-size:10px;margin-top:6px;color:var(--text-tertiary)">Panier moyen = CA HT de la catégorie ÷ fréquentation BTOC du jour (${freq} entrées)</div>
+      </div>
+    </div>
+    ${renderFooter(ctx, 2)}`;
+}
+
+// ============================================
+// PAGE 3 — Clientèle BTOC + Groupes
+// ============================================
+function renderPage3(ctx) {
+  const { day } = ctx;
+  const totalN  = Object.values(day.freq_cat_n).reduce((s, v) => s + v, 0);
+  const totalN1 = Object.values(day.freq_cat_n1).reduce((s, v) => s + v, 0);
+
+  // Tableau comparatif
+  let rows = "";
+  const allCats = ["Adulte", "Enfant", "Bout chou", "Sénior", "PMR", "Gratuit"];
+  for (const cat of allCats) {
+    const n = day.freq_cat_n[cat] || 0;
+    const n1 = (cat === "PMR") ? null : (day.freq_cat_n1[cat] || 0);
+    const col = VISITOR_COLORS[cat] || "#aaa";
+    const pn = totalN ? n / totalN * 100 : 0;
+    if (n1 === null) {
+      rows += `<tr><td><span class="cat-dot" style="background:${col}"></span>${cat}</td><td>${Math.round(n)}</td><td>${pn.toFixed(1).replace(".",",")} %</td><td style="color:var(--text-tertiary)">—</td><td style="color:var(--text-tertiary)">non dispo</td><td>${badge(null)}</td></tr>`;
+    } else {
+      const pn1 = totalN1 ? n1 / totalN1 * 100 : 0;
+      rows += `<tr><td><span class="cat-dot" style="background:${col}"></span>${cat}</td><td>${Math.round(n)}</td><td>${pn.toFixed(1).replace(".",",")} %</td><td>${Math.round(n1)}</td><td>${pn1.toFixed(1).replace(".",",")} %</td><td>${badge(pctEvol(n, n1))}</td></tr>`;
+    }
+  }
+  const cmpTable = `<table class="cat-table cmp-table">
+    <thead><tr><th>Catégorie visiteur</th><th>N</th><th>% N</th><th>N-1</th><th>% N-1</th><th>Évolution</th></tr></thead>
+    <tbody>${rows}
+      <tr class="total"><td>Total détaillé</td><td>${Math.round(totalN)}</td><td>100 %</td><td>${Math.round(totalN1)}</td><td>100 %</td><td></td></tr>
+    </tbody>
+  </table>`;
+
+  // Note écart
+  let noteEcart = "";
+  if (Math.round(totalN) !== day.freq_btoc_n) {
+    const diff = Math.abs(Math.round(totalN) - day.freq_btoc_n);
+    noteEcart = `<div class="perf-meta" style="font-size:10px;margin-top:6px;color:var(--text-tertiary)">Note : la somme par catégorie (${Math.round(totalN)}) diffère de ${diff} du total BTOC affiché (${day.freq_btoc_n}) — vraisemblablement à cause des entrées gratuites comptées différemment.</div>`;
+  }
+
+  // Groupes
+  const g = day.groupes;
+  const groupesTable = `<table class="cat-table">
+    <thead><tr><th>Source</th><th>N</th><th>N-1</th><th>Évolution</th></tr></thead>
+    <tbody>
+      <tr><td>Ventes en ligne</td><td>${g.reserves_n}</td><td>${g.reserves_n1}</td><td>${badge(pctEvol(g.reserves_n, g.reserves_n1))}</td></tr>
+      <tr><td>Ventes en guichet</td><td>${g.surplace_n}</td><td>${g.surplace_n1}</td><td>${badge(pctEvol(g.surplace_n, g.surplace_n1))}</td></tr>
+      <tr class="total"><td>Total groupes</td><td>${g.total_n}</td><td>${g.total_n1}</td><td>${badge(pctEvol(g.total_n, g.total_n1))}</td></tr>
+    </tbody>
+  </table>`;
+
+  // Pour les camemberts : sans PMR pour N-1
+  const catN1NoPMR = {...day.freq_cat_n1};
+
+  return `
+    <div class="page-content">
+      ${renderHeader(ctx, 3)}
+
+      <div class="r-section-label">7 — RÉPARTITION DES ENTRÉES BTOC PAR CATÉGORIE VISITEUR</div>
+      <div class="r-block-grid">
+        <div class="r-block boutique-card" style="border-top:3px solid ${COLOR_BRAND};">
+          <div class="boutique-title" style="color:${COLOR_BRAND};">● Année N</div>
+          <div style="display:grid;grid-template-columns:1fr 130px;gap:0.5rem;align-items:center;">
+            <div>${renderRepartFreqTable(day.freq_cat_n, VISITOR_COLORS, totalN)}</div>
+            <div class="donut-wrap">${renderDonut(day.freq_cat_n, VISITOR_COLORS, 120)}</div>
+          </div>
+        </div>
+        <div class="r-block boutique-card" style="border-top:3px solid #cca09c;">
+          <div class="boutique-title" style="color:#888780;">● Année N-1</div>
+          <div style="display:grid;grid-template-columns:1fr 130px;gap:0.5rem;align-items:center;">
+            <div>${renderRepartFreqTable(catN1NoPMR, VISITOR_COLORS, totalN1)}</div>
+            <div class="donut-wrap">${renderDonut(catN1NoPMR, VISITOR_COLORS, 120)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="r-section-label">8 — COMPARAISON DÉTAILLÉE N vs N-1</div>
+      <div class="r-block">${cmpTable}${noteEcart}</div>
+
+      <div class="r-section-label">9 — DÉTAIL GROUPES</div>
+      <div class="r-block">${groupesTable}</div>
+    </div>
+    ${renderFooter(ctx, 3)}`;
+}
+
+// ============================================
+// PAGE 4 — Détail PDV
+// ============================================
+function renderPage4(ctx) {
+  const { day } = ctx;
+  const freq = day.freq_btoc_n;
+  const pdvsActifs = day.pdvs.filter(p => p.ca_n > 0 || p.ca_n1 > 0);
+  const pdvsInactifs = day.pdvs.filter(p => p.ca_n === 0 && p.ca_n1 === 0);
+
+  let rows = "";
+  for (const p of pdvsActifs) {
+    const evol = pctEvol(p.ca_n, p.ca_n1);
+    const pm = freq ? p.ca_n / freq : 0;
+    const pdvDisp = p.pdv.length <= 55 ? p.pdv : p.pdv.slice(0, 53) + "…";
+    rows += `<tr>
+      <td class="pdv">${pdvDisp}</td>
+      <td>${fmtMoney(p.ca_n)}</td>
+      <td>${fmtMoney(p.ca_n1)}</td>
+      <td>${badge(evol)}</td>
+      <td>${fmtMoney(pm)}</td>
+    </tr>`;
+  }
+  const table = `<table class="cat-table pdv-table">
+    <thead><tr><th>Point de vente</th><th>CA N</th><th>CA N-1</th><th>Évol.</th><th>Panier moyen N</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+
+  let inactifsText = "";
+  const names = pdvsInactifs.filter(p => p.pdv && !p.pdv.startsWith("TOTAL")).map(p => p.pdv);
+  if (names.length) {
+    inactifsText = `<div class="perf-meta" style="font-size:10px;margin-top:8px;color:var(--text-tertiary)">PDV sans activité (CA = 0 en N et N-1) : ${names.join(", ")}</div>`;
+  }
+
+  return `
+    <div class="page-content">
+      ${renderHeader(ctx, 4)}
+      <div class="r-section-label">10 — DÉTAIL PAR POINT DE VENTE</div>
+      <div class="r-block">
+        ${table}
+        ${inactifsText}
+        <div class="perf-meta" style="font-size:10px;margin-top:6px;color:var(--text-tertiary)">Panier moyen par PDV = CA HT du PDV ÷ fréquentation BTOC totale du jour (${freq} entrées).</div>
+      </div>
+    </div>
+    ${renderFooter(ctx, 4)}`;
+}
+
+// ============================================
+// PAGE 5 — Cumul saison
+// ============================================
+function renderPage5(ctx) {
+  const c = ctx.cumul;
+  const evolCa = pctEvol(c.ca_n, c.ca_n1);
+  const evolFreq = pctEvol(c.freq_btoc_n, c.freq_btoc_n1);
+  const evolGrp = pctEvol(c.groupes_total_n, c.groupes_total_n1);
+  const evolPanier = pctEvol(c.panier_n, c.panier_n1);
+
+  const kpisHtml = `
+    <div class="r-block">
+      <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:1rem;">
+        <div class="kpi-card" style="padding:0.75rem;">
+          <div class="kpi-label">CA HT cumulé N</div>
+          <div class="kpi-value" style="font-size:18px;">${fmtMoney(c.ca_n)}</div>
+          <div style="margin-top:4px;">${badge(evolCa)}</div>
+          <div class="perf-meta" style="font-size:10px;margin-top:4px;">N-1 : ${fmtMoney(c.ca_n1)}</div>
+        </div>
+        <div class="kpi-card" style="padding:0.75rem;">
+          <div class="kpi-label">Fréquentation BTOC N</div>
+          <div class="kpi-value" style="font-size:18px;">${fmtNum(c.freq_btoc_n)}</div>
+          <div style="margin-top:4px;">${badge(evolFreq)}</div>
+          <div class="perf-meta" style="font-size:10px;margin-top:4px;">N-1 : ${fmtNum(c.freq_btoc_n1)}</div>
+        </div>
+        <div class="kpi-card" style="padding:0.75rem;">
+          <div class="kpi-label">Groupes N (total)</div>
+          <div class="kpi-value" style="font-size:18px;">${fmtNum(c.groupes_total_n)}</div>
+          <div style="margin-top:4px;">${badge(evolGrp)}</div>
+          <div class="perf-meta" style="font-size:10px;margin-top:4px;">N-1 : ${fmtNum(c.groupes_total_n1)}</div>
+        </div>
+        <div class="kpi-card" style="padding:0.75rem;">
+          <div class="kpi-label">Panier moyen N</div>
+          <div class="kpi-value" style="font-size:18px;">${fmtMoney(c.panier_n)}</div>
+          <div style="margin-top:4px;">${badge(evolPanier)}</div>
+          <div class="perf-meta" style="font-size:10px;margin-top:4px;">N-1 : ${fmtMoney(c.panier_n1)}</div>
+        </div>
+      </div>
+      <div class="perf-meta" style="font-size:10px;margin-top:8px;color:var(--text-tertiary)">
+        Cumul sur ${c.days_analyzed} jour${c.days_analyzed > 1 ? "s" : ""} analysé${c.days_analyzed > 1 ? "s" : ""}, dont ${c.days_open_n} jour${c.days_open_n > 1 ? "s" : ""} d'ouverture (CA &gt; 0).
+      </div>
+    </div>`;
+
+  // CA cumul par catégorie
+  let catRows = "";
+  const catTotalN = Object.values(c.by_cat_n).reduce((s, v) => s + v, 0);
+  const catTotalN1 = Object.values(c.by_cat_n1).reduce((s, v) => s + v, 0);
+  const catEntries = Object.entries(c.by_cat_n).sort((a, b) => b[1] - a[1]);
+  for (const [cat, caN] of catEntries) {
+    const caN1 = c.by_cat_n1[cat] || 0;
+    if (caN === 0 && caN1 === 0) continue;
+    const evol = pctEvol(caN, caN1);
+    const color = CAT_COLORS[cat] || "#aaa";
+    const p = catTotalN ? caN / catTotalN * 100 : 0;
+    catRows += `<tr><td><span class="cat-dot" style="background:${color}"></span>${cat}</td><td>${fmtMoney(caN)}</td><td>${p.toFixed(1).replace(".",",")} %</td><td>${fmtMoney(caN1)}</td><td>${badge(evol)}</td></tr>`;
+  }
+  const catTable = `<table class="cat-table cumul-cat-table">
+    <thead><tr><th>Catégorie PDV</th><th>CA N</th><th>% N</th><th>CA N-1</th><th>Évolution</th></tr></thead>
+    <tbody>${catRows}
+      <tr class="total"><td>Total</td><td>${fmtMoney(catTotalN)}</td><td>100 %</td><td>${fmtMoney(catTotalN1)}</td><td></td></tr>
+    </tbody>
+  </table>`;
+
+  // Fréquentation cumulée par catégorie visiteur
+  let visitRows = "";
+  const totalVisitN  = Object.values(c.freq_cat_n).reduce((s, v) => s + v, 0);
+  const totalVisitN1 = Object.values(c.freq_cat_n1).reduce((s, v) => s + v, 0);
+  for (const cat of ["Adulte", "Enfant", "Bout chou", "Sénior", "PMR", "Gratuit"]) {
+    const n = c.freq_cat_n[cat] || 0;
+    const n1 = (cat === "PMR") ? null : (c.freq_cat_n1[cat] || 0);
+    const color = VISITOR_COLORS[cat] || "#aaa";
+    const pn = totalVisitN ? n / totalVisitN * 100 : 0;
+    if (n1 === null) {
+      visitRows += `<tr><td><span class="cat-dot" style="background:${color}"></span>${cat}</td><td>${Math.round(n)}</td><td>${pn.toFixed(1).replace(".",",")} %</td><td style="color:var(--text-tertiary)">non dispo</td><td>${badge(null)}</td></tr>`;
+    } else {
+      const pn1 = totalVisitN1 ? n1 / totalVisitN1 * 100 : 0;
+      visitRows += `<tr><td><span class="cat-dot" style="background:${color}"></span>${cat}</td><td>${Math.round(n)}</td><td>${pn.toFixed(1).replace(".",",")} %</td><td>${Math.round(n1)} (${pn1.toFixed(1).replace(".",",")} %)</td><td>${badge(pctEvol(n, n1))}</td></tr>`;
+    }
+  }
+  const visitTable = `<table class="cat-table cumul-cat-table">
+    <thead><tr><th>Catégorie visiteur</th><th>Qté N</th><th>% N</th><th>N-1</th><th>Évolution</th></tr></thead>
+    <tbody>${visitRows}
+      <tr class="total"><td>Total</td><td>${Math.round(totalVisitN)}</td><td>100 %</td><td>${Math.round(totalVisitN1)}</td><td></td></tr>
+    </tbody>
+  </table>`;
+
+  // Groupes cumulés
+  const grpTable = `<table class="cat-table cumul-grp-table">
+    <thead><tr><th>Source</th><th>N</th><th>N-1</th><th>Évolution</th></tr></thead>
+    <tbody>
+      <tr><td>Ventes en ligne</td><td>${c.groupes_resa_n}</td><td>${c.groupes_resa_n1}</td><td>${badge(pctEvol(c.groupes_resa_n, c.groupes_resa_n1))}</td></tr>
+      <tr><td>Ventes en guichet</td><td>${c.groupes_surplace_n}</td><td>${c.groupes_surplace_n1}</td><td>${badge(pctEvol(c.groupes_surplace_n, c.groupes_surplace_n1))}</td></tr>
+      <tr class="total"><td>Total groupes</td><td>${c.groupes_total_n}</td><td>${c.groupes_total_n1}</td><td>${badge(pctEvol(c.groupes_total_n, c.groupes_total_n1))}</td></tr>
+    </tbody>
+  </table>`;
+
+  return `
+    <div class="page-content">
+      ${renderHeader(ctx, 5)}
+
+      <div class="r-section-label">11 — KPI CUMUL SAISON À DATE</div>
+      ${kpisHtml}
+
+      <div class="r-section-label">12 — CA CUMULÉ PAR CATÉGORIE DE POINT DE VENTE</div>
+      <div class="r-block">${catTable}</div>
+
+      <div class="r-section-label">13 — FRÉQUENTATION BTOC CUMULÉE PAR CATÉGORIE VISITEUR</div>
+      <div class="r-block">${visitTable}</div>
+
+      <div class="r-section-label">14 — GROUPES CUMULÉS SAISON</div>
+      <div class="r-block">${grpTable}</div>
+    </div>
+    ${renderFooter(ctx, 5)}`;
+}
+
+
+// ============================================
+// UI : drop zone, sélecteur de jour, version, print, reset
+// ============================================
+let currentWorkbook = null;
+let currentAllDays = null;   // { sheetName: rawDay, ... }
+let currentDatedSheets = null;  // [{sheet, date, label}, ...] triés croissant
+let currentVersion = "commission";
+
+const dropZone   = document.getElementById("dropZone");
+const fileInput  = document.getElementById("fileInput");
+const fileName   = document.getElementById("fileName");
+const daySelect  = document.getElementById("daySelect");
+const radioCommission = document.getElementById("radioCommission");
+const radioTotalPhotos = document.getElementById("radioTotalPhotos");
+const btnPrint   = document.getElementById("btnPrint");
+const btnReset   = document.getElementById("btnReset");
+const logZone    = document.getElementById("logZone");
+const reportContainer = document.getElementById("reportContainer");
+
+function log(msg, type) {
+  logZone.textContent = msg;
+  logZone.className = "log-zone " + (type || "");
+}
+function clearLog() {
+  logZone.textContent = ""; logZone.className = "log-zone empty";
+}
+
+// === Drag & drop ===
+dropZone.addEventListener("click", () => fileInput.click());
+dropZone.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") fileInput.click(); });
+["dragover", "dragenter"].forEach(ev => dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.add("dragover"); }));
+["dragleave", "dragend", "drop"].forEach(ev => dropZone.addEventListener(ev, () => dropZone.classList.remove("dragover")));
+dropZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener("change", (e) => {
+  if (e.target.files.length) handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+  if (!/\.(xlsx|xls)$/i.test(file.name)) { log("Format non supporté. Glissez un fichier .xlsx", "error"); return; }
+  fileName.textContent = file.name;
+  log("Lecture du fichier en cours…");
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: "array", cellDates: true });
+      currentWorkbook = wb;
+
+      // Identifier les onglets datés (JJMMAA ou JJMMAAAA)
+      const dated = [];
+      for (const name of wb.SheetNames) {
+        const d = parseSheetDate(name);
+        if (d) dated.push({ sheet: name, date: d });
+      }
+      dated.sort((a, b) => a.date - b.date);
+
+      // Parser chaque onglet
+      const allDays = {};
+      for (const { sheet } of dated) {
+        const raw = parseSheet(wb, sheet);
+        if (raw) allDays[sheet] = raw;
+      }
+      currentAllDays = allDays;
+      currentDatedSheets = dated;
+
+      // Remplir le sélecteur de jour
+      daySelect.innerHTML = `<option value="">— Sélectionner un jour —</option>` +
+        dated.map(({ sheet, date }) => `<option value="${sheet}">${capitalize(JOURS_FR[date.getDay()])} ${date.getDate()} ${MOIS_FR[date.getMonth()]} ${date.getFullYear()}</option>`).join("");
+
+      daySelect.disabled = false;
+      radioCommission.disabled = false;
+      radioTotalPhotos.disabled = false;
+      btnReset.disabled = false;
+
+      // Pré-sélection : le dernier jour avec des données (CA > 0)
+      let defaultSheet = "";
+      for (let i = dated.length - 1; i >= 0; i--) {
+        const raw = allDays[dated[i].sheet];
+        if (raw && raw.ca_total_n > 0) { defaultSheet = dated[i].sheet; break; }
+      }
+      if (defaultSheet) {
+        daySelect.value = defaultSheet;
+        renderReport(defaultSheet);
+      }
+
+      log(`Fichier chargé. ${dated.length} jours détectés (du ${fmtDateShort(dated[0].date)} au ${fmtDateShort(dated[dated.length-1].date)}).`, "success");
+    } catch (err) {
+      console.error(err);
+      log("Erreur lors de la lecture du fichier : " + err.message, "error");
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// === Sélection du jour ===
+daySelect.addEventListener("change", () => {
+  if (daySelect.value) renderReport(daySelect.value);
+});
+
+// === Version (commission / total photos) ===
+function onVersionChange() {
+  currentVersion = radioTotalPhotos.checked ? "total_photos" : "commission";
+  if (daySelect.value) renderReport(daySelect.value);
+}
+radioCommission.addEventListener("change", onVersionChange);
+radioTotalPhotos.addEventListener("change", onVersionChange);
+
+// === Imprimer ===
+btnPrint.addEventListener("click", () => window.print());
+
+// === Recommencer ===
+btnReset.addEventListener("click", () => {
+  currentWorkbook = null;
+  currentAllDays = null;
+  currentDatedSheets = null;
+  fileName.textContent = "";
+  fileInput.value = "";
+  daySelect.innerHTML = `<option value="">— Charger un fichier d'abord —</option>`;
+  daySelect.disabled = true;
+  radioCommission.checked = true;
+  radioCommission.disabled = true;
+  radioTotalPhotos.disabled = true;
+  currentVersion = "commission";
+  btnPrint.disabled = true;
+  btnReset.disabled = true;
+  reportContainer.classList.remove("ready");
+  reportContainer.innerHTML = "";
+  clearLog();
+});
+
+// === Render principal ===
+function renderReport(sheetName) {
+  if (!currentAllDays || !currentDatedSheets) return;
+  const raw = currentAllDays[sheetName];
+  if (!raw) { log("Aucune donnée pour ce jour.", "error"); return; }
+
+  const dt = currentDatedSheets.find(s => s.sheet === sheetName).date;
+  const day = computeDay(raw, currentVersion);
+  const cumul = computeCumul(currentAllDays, currentDatedSheets, sheetName, currentVersion);
+
+  const ctx = {
+    sheet: sheetName,
+    date: dt,
+    dateLong: fmtDateLong(dt),
+    dateShort: fmtDateShort(dt),
+    version: currentVersion,
+    day,
+    cumul,
+  };
+
+  const pages = [
+    renderPage1(ctx),
+    renderPage2(ctx),
+    renderPage3(ctx),
+    renderPage4(ctx),
+    renderPage5(ctx),
+  ];
+  reportContainer.innerHTML = pages.map(p => `<div class="page-sheet">${p}</div>`).join("");
+  reportContainer.classList.add("ready");
+  btnPrint.disabled = false;
+}
+
+</script>
+
+</body>
+</html>
