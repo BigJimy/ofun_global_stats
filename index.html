@@ -325,18 +325,21 @@ const ZONE_COLORS = {
   "EXPLORER CAMP": "#c98a40",
   "RUSH WATER": "#4a6d8c",
   "SILVER LAKE": "#5fb898",
+  "PIONEER BATTLE": "#7a99b3",
   "PHOTO": "#a05030",
 };
 
 // Palette catégories PDV (telles que dans le fichier)
 const CAT_COLORS = {
   "GUICHET": "#7b170f",
-  "RESTAU": "#c98a40",
+  "RESTO": "#c98a40",
+  "RESTAU": "#c98a40",        // alias rétrocompatibilité
   "SNACK": "#4a6d8c",
   "BOUTIQUE": "#1d9e75",
   "GANTS": "#a05030",
   "CASIER": "#7a99b3",
-  "BILLES PAINTBALL": "#5fb898",
+  "PAINTBALL": "#5fb898",
+  "BILLES PAINTBALL": "#5fb898",  // alias rétrocompatibilité
   "PHOTO TOTAL": "#cca09c",
 };
 
@@ -406,9 +409,18 @@ const num = (v) => {
   return Number.isNaN(f) ? 0 : f;
 };
 
-// Parse JJMMAA ou JJMMAAAA → Date
+// Parse les noms d'onglet et renvoie une Date.
+// Formats acceptés :
+//   - Nouveau format : "S23 LUN (010626)" ou "S24 DIM (07062026)" → on prend la date entre parenthèses
+//   - Ancien format  : "010626" ou "07062026" (JJMMAA / JJMMAAAA)
 function parseSheetDate(name) {
-  const m = name.match(/^(\d{2})(\d{2})(\d{2,4})$/);
+  const s = String(name).trim();
+  // Cherche d'abord une date entre parenthèses à la fin (nouveau format)
+  let m = s.match(/\((\d{2})(\d{2})(\d{2,4})\)\s*$/);
+  if (!m) {
+    // Sinon, ancien format : la chaîne entière est la date
+    m = s.match(/^(\d{2})(\d{2})(\d{2,4})$/);
+  }
   if (!m) return null;
   const day = parseInt(m[1], 10);
   const month = parseInt(m[2], 10);
@@ -458,14 +470,37 @@ function parseSheet(workbook, sheetName) {
     });
   }
 
-  // Ligne 21 (index 20) = TOTAL
+  // Ligne 21 (index 20) = TOTAL HT (peut contenir une formule non évaluée → 0)
   const totalRow = aoa[20] || [];
-  const ca_total_n = num(totalRow[COL.CA_N]);
-  const ca_total_n1 = num(totalRow[COL.CA_N1]);
+  let ca_total_n  = num(totalRow[COL.CA_N]);
+  let ca_total_n1 = num(totalRow[COL.CA_N1]);
 
   // Lignes 19 (idx 18) et 20 (idx 19) : photos
-  const photo_total_n = num(aoa[18][COL.CA_N]);
-  const photo_retro_n = num(aoa[19][COL.CA_N]);
+  const photo_total_n  = num(aoa[18][COL.CA_N]);
+  let   photo_retro_n  = num(aoa[19][COL.CA_N]);
+  const photo_total_n1 = num(aoa[18][COL.CA_N1]);
+  let   photo_retro_n1 = num(aoa[19][COL.CA_N1]);
+
+  // Si L20 (rétrocession) est vide (cas formule Excel non évaluée), on la calcule à 30 % de L19
+  if (photo_retro_n === 0 && photo_total_n > 0)  photo_retro_n  = photo_total_n  * 0.3;
+  if (photo_retro_n1 === 0 && photo_total_n1 > 0) photo_retro_n1 = photo_total_n1 * 0.3;
+
+  // Si L21 (TOTAL HT) est vide (cas formule Excel non évaluée), on la recalcule
+  // Formule originale : E21 = E2+E3+...+E18+E20 (somme des PDV hors photos + commission)
+  if (ca_total_n === 0) {
+    let s = 0;
+    for (let i = 1; i <= 17; i++) {  // L2 à L18 (indices 1 à 17) = PDV hors photos
+      if (aoa[i]) s += num(aoa[i][COL.CA_N]);
+    }
+    ca_total_n = s + photo_retro_n;
+  }
+  if (ca_total_n1 === 0) {
+    let s = 0;
+    for (let i = 1; i <= 17; i++) {
+      if (aoa[i]) s += num(aoa[i][COL.CA_N1]);
+    }
+    ca_total_n1 = s + photo_retro_n1;
+  }
 
   // Fréquentation L1 (idx 1) - TOTAL
   const freq_btoc_n  = num(aoa[1][COL.FREQ_TOTAL_N]);
@@ -489,13 +524,19 @@ function parseSheet(workbook, sheetName) {
   };
 
   // Groupes : L2/L3/L4 cols AK (N-1) et AL (N)
+  // L4 contient potentiellement une formule (=AK2+AK3, =AL2+AL3) non évaluée → recalculer
+  const grp_reserves_n  = num(aoa[1][COL.GROUPES_N]);
+  const grp_reserves_n1 = num(aoa[1][COL.GROUPES_N1]);
+  const grp_surplace_n  = num(aoa[2][COL.GROUPES_N]);
+  const grp_surplace_n1 = num(aoa[2][COL.GROUPES_N1]);
+  let grp_total_n  = num(aoa[3][COL.GROUPES_N]);
+  let grp_total_n1 = num(aoa[3][COL.GROUPES_N1]);
+  if (grp_total_n === 0)  grp_total_n  = grp_reserves_n  + grp_surplace_n;
+  if (grp_total_n1 === 0) grp_total_n1 = grp_reserves_n1 + grp_surplace_n1;
   const groupes = {
-    reserves_n:    num(aoa[1][COL.GROUPES_N]),
-    reserves_n1:   num(aoa[1][COL.GROUPES_N1]),
-    surplace_n:    num(aoa[2][COL.GROUPES_N]),
-    surplace_n1:   num(aoa[2][COL.GROUPES_N1]),
-    total_n:       num(aoa[3][COL.GROUPES_N]),
-    total_n1:      num(aoa[3][COL.GROUPES_N1]),
+    reserves_n: grp_reserves_n, reserves_n1: grp_reserves_n1,
+    surplace_n: grp_surplace_n, surplace_n1: grp_surplace_n1,
+    total_n: grp_total_n, total_n1: grp_total_n1,
   };
 
   return {
@@ -524,7 +565,7 @@ function computeDay(raw, version) {
   const byZoneN = {}, byCatN = {};
   const byZoneN1 = {}, byCatN1 = {};
   for (const p of raw.pdvs) {
-    if (p.pdv.includes("PHOTO VENDUES")) continue;
+    if (/PHOTOS?\s+VENDUES/i.test(p.pdv)) continue;
     if (p.zone && p.zone !== "nan") {
       byZoneN[p.zone]  = (byZoneN[p.zone]  || 0) + p.ca_n;
       byZoneN1[p.zone] = (byZoneN1[p.zone] || 0) + p.ca_n1;
@@ -611,7 +652,7 @@ function computeCumul(allDays, datedSheets, currentSheet, version) {
 
     // CA par catégorie/zone (hors photos)
     for (const p of raw.pdvs) {
-      if (p.pdv.includes("PHOTO VENDUES")) continue;
+      if (/PHOTOS?\s+VENDUES/i.test(p.pdv)) continue;
       if (p.zone && p.zone !== "nan") {
         cumul.by_zone_n[p.zone]  = (cumul.by_zone_n[p.zone]  || 0) + p.ca_n;
         cumul.by_zone_n1[p.zone] = (cumul.by_zone_n1[p.zone] || 0) + p.ca_n1;
@@ -695,14 +736,14 @@ function renderHeader(ctx, pageNum) {
           <div class="r-subtitle">${versionLabel}</div>
         </div>
       </div>
-      <div class="r-header-right">Page ${pageNum} / 5<br>Présentation Codir</div>
+      <div class="r-header-right">Page ${pageNum} / 4<br>Présentation Codir</div>
     </div>`;
 }
 
 function renderFooter(ctx, pageNum) {
   return `<div class="footer-page">
     <span>O'Fun Park · Rapport journalier · ${ctx.dateShort}</span>
-    <span>Page ${pageNum} / 5</span>
+    <span>Page ${pageNum} / 4</span>
   </div>`;
 }
 
@@ -747,13 +788,6 @@ function renderPage1(ctx) {
   const evolPanier = pctEvol(day.panier_n, day.panier_n1);
   const evolGrp = pctEvol(day.groupes.total_n, day.groupes.total_n1);
 
-  let a1Warning = "";
-  if (day.a1 === "FERME" && day.ca_total_n > 0) {
-    a1Warning = `<div class="r-block" style="background:var(--amber-bg);border-left:3px solid var(--brand-gold);padding:0.6rem 1rem;margin-bottom:0.75rem;">
-      <div style="font-size:12px;"><b>⚠ Cellule A1 = "FERME" dans le fichier source</b> — Il y a pourtant des données ce jour-là. Indicateur à ignorer (non fiable).</div>
-    </div>`;
-  }
-
   const otherLabel = ctx.version === "commission" ? "Avec total photos" : "Avec commission perçue";
   const otherVal = ctx.version === "commission" ? day.ca_total_n_total_photo : day.ca_total_n_commission;
   const otherNote = `<span style="color:var(--text-tertiary)">${otherLabel} : ${fmtMoney(otherVal)} — écart : ${fmtMoney(Math.abs(day.ca_total_n - otherVal))}</span>`;
@@ -761,7 +795,6 @@ function renderPage1(ctx) {
   return `
     <div class="page-content">
       ${renderHeader(ctx, 1)}
-      ${a1Warning}
 
       <div class="r-section-label">1 — PERFORMANCE DU JOUR</div>
       <div class="r-block">
@@ -803,7 +836,6 @@ function renderPage1(ctx) {
                 ${badge(evolGrp)}
               </div>
               <div class="perf-meta">N-1 : ${fmtNum(day.groupes.total_n1)}</div>
-              <div class="perf-meta">Ventes en ligne : ${day.groupes.reserves_n} (vs ${day.groupes.reserves_n1}) · Ventes en guichet : ${day.groupes.surplace_n} (vs ${day.groupes.surplace_n1})</div>
             </div>
             <div>${renderCompareBars(day.groupes.total_n1, day.groupes.total_n)}</div>
           </div>
@@ -852,6 +884,42 @@ function renderPage2(ctx) {
     <tbody>${panierRows}</tbody>
   </table>`;
 
+  // === Détail par point de vente (ex section 10, déplacée en page 2) ===
+  const pdvsActifs = day.pdvs.filter(p => p.ca_n > 0 || p.ca_n1 > 0);
+  const pdvsInactifs = day.pdvs.filter(p => p.ca_n === 0 && p.ca_n1 === 0);
+
+  let pdvRows = "";
+  for (const p of pdvsActifs) {
+    const evol = pctEvol(p.ca_n, p.ca_n1);
+    const pm = freq ? p.ca_n / freq : 0;
+    const pdvDisp = p.pdv.length <= 55 ? p.pdv : p.pdv.slice(0, 53) + "…";
+    pdvRows += `<tr>
+      <td class="pdv">${pdvDisp}</td>
+      <td>${fmtMoney(p.ca_n)}</td>
+      <td>${fmtMoney(p.ca_n1)}</td>
+      <td>${badge(evol)}</td>
+      <td>${fmtMoney(pm)}</td>
+    </tr>`;
+  }
+  const pdvTable = `<table class="cat-table pdv-table">
+    <thead><tr><th>Point de vente</th><th>CA N</th><th>CA N-1</th><th>Évol.</th><th>Panier moyen N</th></tr></thead>
+    <tbody>${pdvRows}</tbody>
+  </table>`;
+
+  let inactifsText = "";
+  const names = pdvsInactifs.filter(p => p.pdv && !p.pdv.startsWith("TOTAL")).map(p => p.pdv);
+  if (names.length) {
+    inactifsText = `<div class="perf-meta" style="font-size:10px;margin-top:8px;color:var(--text-tertiary)">PDV sans activité (CA = 0 en N et N-1) : ${names.join(", ")}</div>`;
+  }
+
+  // === Récap panier moyen global du jour (rappel pratique) ===
+  const panierGlobalRecap = `
+    <div style="margin-top:0.75rem;padding:0.5rem 0.75rem;background:var(--bg-soft);border-radius:6px;display:flex;justify-content:space-between;align-items:baseline;font-size:12px;">
+      <span style="color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;font-weight:500;">Panier moyen global HT du jour</span>
+      <span style="font-size:16px;font-weight:500;color:${COLOR_BRAND};font-variant-numeric:tabular-nums;">${fmtMoney(day.panier_n)}</span>
+    </div>
+    <div class="perf-meta" style="font-size:10px;color:var(--text-tertiary);">CA total ${fmtMoney(day.ca_total_n)} ÷ ${freq} entrées BTOC</div>`;
+
   return `
     <div class="page-content">
       ${renderHeader(ctx, 2)}
@@ -876,6 +944,13 @@ function renderPage2(ctx) {
       <div class="r-block">
         ${panierTable}
         <div class="perf-meta" style="font-size:10px;margin-top:6px;color:var(--text-tertiary)">Panier moyen = CA HT de la catégorie ÷ fréquentation BTOC du jour (${freq} entrées)</div>
+      </div>
+
+      <div class="r-section-label">7 — DÉTAIL PAR POINT DE VENTE</div>
+      <div class="r-block">
+        ${pdvTable}
+        ${inactifsText}
+        ${panierGlobalRecap}
       </div>
     </div>
     ${renderFooter(ctx, 2)}`;
@@ -918,17 +993,6 @@ function renderPage3(ctx) {
     noteEcart = `<div class="perf-meta" style="font-size:10px;margin-top:6px;color:var(--text-tertiary)">Note : la somme par catégorie (${Math.round(totalN)}) diffère de ${diff} du total BTOC affiché (${day.freq_btoc_n}) — vraisemblablement à cause des entrées gratuites comptées différemment.</div>`;
   }
 
-  // Groupes
-  const g = day.groupes;
-  const groupesTable = `<table class="cat-table">
-    <thead><tr><th>Source</th><th>N</th><th>N-1</th><th>Évolution</th></tr></thead>
-    <tbody>
-      <tr><td>Ventes en ligne</td><td>${g.reserves_n}</td><td>${g.reserves_n1}</td><td>${badge(pctEvol(g.reserves_n, g.reserves_n1))}</td></tr>
-      <tr><td>Ventes en guichet</td><td>${g.surplace_n}</td><td>${g.surplace_n1}</td><td>${badge(pctEvol(g.surplace_n, g.surplace_n1))}</td></tr>
-      <tr class="total"><td>Total groupes</td><td>${g.total_n}</td><td>${g.total_n1}</td><td>${badge(pctEvol(g.total_n, g.total_n1))}</td></tr>
-    </tbody>
-  </table>`;
-
   // Pour les camemberts : sans PMR pour N-1
   const catN1NoPMR = {...day.freq_cat_n1};
 
@@ -936,7 +1000,7 @@ function renderPage3(ctx) {
     <div class="page-content">
       ${renderHeader(ctx, 3)}
 
-      <div class="r-section-label">7 — RÉPARTITION DES ENTRÉES BTOC PAR CATÉGORIE VISITEUR</div>
+      <div class="r-section-label">8 — RÉPARTITION DES ENTRÉES BTOC PAR CATÉGORIE VISITEUR</div>
       <div class="r-block-grid">
         <div class="r-block boutique-card" style="border-top:3px solid ${COLOR_BRAND};">
           <div class="boutique-title" style="color:${COLOR_BRAND};">● Année N</div>
@@ -954,65 +1018,16 @@ function renderPage3(ctx) {
         </div>
       </div>
 
-      <div class="r-section-label">8 — COMPARAISON DÉTAILLÉE N vs N-1</div>
+      <div class="r-section-label">9 — COMPARAISON DÉTAILLÉE N vs N-1</div>
       <div class="r-block">${cmpTable}${noteEcart}</div>
-
-      <div class="r-section-label">9 — DÉTAIL GROUPES</div>
-      <div class="r-block">${groupesTable}</div>
     </div>
     ${renderFooter(ctx, 3)}`;
 }
 
 // ============================================
-// PAGE 4 — Détail PDV
+// PAGE 4 — Cumul saison (anciennement page 5)
 // ============================================
 function renderPage4(ctx) {
-  const { day } = ctx;
-  const freq = day.freq_btoc_n;
-  const pdvsActifs = day.pdvs.filter(p => p.ca_n > 0 || p.ca_n1 > 0);
-  const pdvsInactifs = day.pdvs.filter(p => p.ca_n === 0 && p.ca_n1 === 0);
-
-  let rows = "";
-  for (const p of pdvsActifs) {
-    const evol = pctEvol(p.ca_n, p.ca_n1);
-    const pm = freq ? p.ca_n / freq : 0;
-    const pdvDisp = p.pdv.length <= 55 ? p.pdv : p.pdv.slice(0, 53) + "…";
-    rows += `<tr>
-      <td class="pdv">${pdvDisp}</td>
-      <td>${fmtMoney(p.ca_n)}</td>
-      <td>${fmtMoney(p.ca_n1)}</td>
-      <td>${badge(evol)}</td>
-      <td>${fmtMoney(pm)}</td>
-    </tr>`;
-  }
-  const table = `<table class="cat-table pdv-table">
-    <thead><tr><th>Point de vente</th><th>CA N</th><th>CA N-1</th><th>Évol.</th><th>Panier moyen N</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
-
-  let inactifsText = "";
-  const names = pdvsInactifs.filter(p => p.pdv && !p.pdv.startsWith("TOTAL")).map(p => p.pdv);
-  if (names.length) {
-    inactifsText = `<div class="perf-meta" style="font-size:10px;margin-top:8px;color:var(--text-tertiary)">PDV sans activité (CA = 0 en N et N-1) : ${names.join(", ")}</div>`;
-  }
-
-  return `
-    <div class="page-content">
-      ${renderHeader(ctx, 4)}
-      <div class="r-section-label">10 — DÉTAIL PAR POINT DE VENTE</div>
-      <div class="r-block">
-        ${table}
-        ${inactifsText}
-        <div class="perf-meta" style="font-size:10px;margin-top:6px;color:var(--text-tertiary)">Panier moyen par PDV = CA HT du PDV ÷ fréquentation BTOC totale du jour (${freq} entrées).</div>
-      </div>
-    </div>
-    ${renderFooter(ctx, 4)}`;
-}
-
-// ============================================
-// PAGE 5 — Cumul saison
-// ============================================
-function renderPage5(ctx) {
   const c = ctx.cumul;
   const evolCa = pctEvol(c.ca_n, c.ca_n1);
   const evolFreq = pctEvol(c.freq_btoc_n, c.freq_btoc_n1);
@@ -1095,19 +1110,17 @@ function renderPage5(ctx) {
     </tbody>
   </table>`;
 
-  // Groupes cumulés
+  // Groupes cumulés — une seule ligne (les sources Ventes en ligne/guichet ne sont plus séparées)
   const grpTable = `<table class="cat-table cumul-grp-table">
-    <thead><tr><th>Source</th><th>N</th><th>N-1</th><th>Évolution</th></tr></thead>
+    <thead><tr><th></th><th>N</th><th>N-1</th><th>Évolution</th></tr></thead>
     <tbody>
-      <tr><td>Ventes en ligne</td><td>${c.groupes_resa_n}</td><td>${c.groupes_resa_n1}</td><td>${badge(pctEvol(c.groupes_resa_n, c.groupes_resa_n1))}</td></tr>
-      <tr><td>Ventes en guichet</td><td>${c.groupes_surplace_n}</td><td>${c.groupes_surplace_n1}</td><td>${badge(pctEvol(c.groupes_surplace_n, c.groupes_surplace_n1))}</td></tr>
       <tr class="total"><td>Total groupes</td><td>${c.groupes_total_n}</td><td>${c.groupes_total_n1}</td><td>${badge(pctEvol(c.groupes_total_n, c.groupes_total_n1))}</td></tr>
     </tbody>
   </table>`;
 
   return `
     <div class="page-content">
-      ${renderHeader(ctx, 5)}
+      ${renderHeader(ctx, 4)}
 
       <div class="r-section-label">11 — KPI CUMUL SAISON À DATE</div>
       ${kpisHtml}
@@ -1121,7 +1134,7 @@ function renderPage5(ctx) {
       <div class="r-section-label">14 — GROUPES CUMULÉS SAISON</div>
       <div class="r-block">${grpTable}</div>
     </div>
-    ${renderFooter(ctx, 5)}`;
+    ${renderFooter(ctx, 4)}`;
 }
 
 
@@ -1283,7 +1296,6 @@ function renderReport(sheetName) {
     renderPage2(ctx),
     renderPage3(ctx),
     renderPage4(ctx),
-    renderPage5(ctx),
   ];
   reportContainer.innerHTML = pages.map(p => `<div class="page-sheet">${p}</div>`).join("");
   reportContainer.classList.add("ready");
