@@ -260,6 +260,17 @@ button.secondary:hover { background: var(--bg-soft); }
   border-top: 0.5px solid var(--border-light);
   display: flex; justify-content: space-between;
 }
+
+/* ============ Mode tabs ============ */
+.mode-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; }
+.mode-tab {
+  flex: 1; padding: 9px; border-radius: 6px; cursor: pointer;
+  font-size: 13px; font-weight: 500; text-align: center;
+  border: 0.5px solid var(--border); background: white;
+  color: var(--text-secondary); font-family: inherit; transition: all 0.15s;
+}
+.mode-tab.active { background: var(--brand-red); color: white; border-color: var(--brand-red); }
+.mode-tab:hover:not(.active) { background: var(--bg-soft); }
 </style>
 </head>
 <body>
@@ -269,9 +280,15 @@ button.secondary:hover { background: var(--bg-soft); }
   <div class="ui-shell-header">
     <div class="ui-logo"><svg id="Calque_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 222 103"> <g> <g> <g> <path d="M103.89,29.39c.53.41,1.05.7,1.63.88.58.18,1.11.53,1.63.99.53.47.76,1.11.76,1.87s-4.08,31.81-4.08,32.22c0,.93.35,1.58,1.05,1.93s1.87.53,3.51.53h.23c1.75,0,3.04-.23,3.86-.7.82-.47,1.28-1.28,1.46-2.39l1.97-14.62,8.89-.11c1.52,0,2.58-.35,3.16-1.05s.88-1.93.88-3.74c0-1.05-.53-1.58-1.63-1.58-.35,0-1.58.06-3.68.18-2.1.12-5.74.28-6.91.28l1.4-11.16c.18-1.11.41-1.81.76-2.16.35-.35,1.17-.53,2.45-.53h2.15c1.63,0,2.69.23,3.16.64.47.41.88,1.52,1.28,3.33.29,1.52.64,2.57,1.05,3.09s.93.82,1.58.82c1.46,0,2.57-1.23,3.33-3.74.76-2.51,1.11-5.03,1.11-7.54,0-.88-.23-1.58-.64-2.04-.41-.47-1.17-.7-2.22-.76-2.74-.18-4.13-.29-9.45-.29-4.76,0-14.04.34-14.37.35-2.22.12-3.63.41-4.21.82s-.88,1.4-.88,2.92c0,.64.23,1.17.76,1.58h0Z" style="fill: #fff;"/> <path d="M136.66,41.57c.53.42,1.07.71,1.66.89.59.18,1.13.53,1.66,1.01s.77,1.13.77,1.9c0,.42-.42,2.85-1.25,7.24-.83,4.39-1.25,7.3-1.25,8.73,0,2.08.59,3.68,1.72,4.81s2.79,1.66,4.98,1.66c0,0,3.28.34,7.06-2.31,2.04-1.42,3.79-3.32,5.16-5.93-.18,1.36-.3,2.25-.3,2.67,0,3.5,1.9,5.28,5.64,5.28,2.5,0,4.81-.72,7.01-2.08s3.26-3.09,3.26-5.17c0-.65-.12-1.25-.36-1.72s-.47-.72-.72-.72c-.06,0-.53.12-1.36.3-.83.18-1.48.3-1.96.3-.72,0-1.07-.36-1.07-1.13,0-.59.36-3.86,1.12-9.79.77-5.93,1.13-9.02,1.13-9.32,0-.89-.36-1.54-1.07-1.9-.72-.36-1.9-.53-3.62-.53-1.84,0-3.14.24-3.98.71-.83.47-1.31,1.31-1.48,2.44l-1.31,10.97c-.36,2.91-1.25,5.34-2.67,7.3s-3.09,2.97-4.98,2.97c-1.25,0-1.9-.77-1.9-2.31,0-1.13.47-4.33,1.42-9.55.95-5.22,1.42-8.37,1.42-9.43,0-1.12-.47-1.9-1.42-2.37-.95-.47-2.85-.71-5.64-.71-2.55,0-4.45.18-5.63.47-1.19.3-1.96.72-2.31,1.25-.36.53-.53,1.36-.53,2.5,0,.65.23,1.19.77,1.61h-.01Z" style="fill: #fff;"/> <path d="M174.17,41.92c.53.42,1.07.72,1.66.89.59.18,1.12.53,1.66,1.01.53.47.77,1.12.77,1.9,0,.59-.42,3.98-1.19,10.08-.77,6.11-1.19,9.38-1.19,9.73,0,.95.36,1.6,1.07,1.96.72.36,1.9.53,3.5.53,0,0,2.56,0,4.28-.95.84-.47,1.31-1.31,1.48-2.44l1.07-9.02c.42-3.38,1.36-6.17,2.91-8.37,1.54-2.2,3.14-3.32,4.87-3.32.77,0,1.36.24,1.78.72.42.47.59,1.36.59,2.61,0,.95-.3,3.39-.83,7.36-.53,3.98-.83,6.53-.83,7.71,0,1.66.47,2.97,1.42,3.98s2.31,1.48,4.15,1.48c2.44,0,4.69-.72,6.82-2.2,2.14-1.48,3.2-3.14,3.2-4.98,0-.66-.12-1.25-.36-1.72s-.47-.72-.72-.72c-.06,0-.47.12-1.25.3-.77.18-1.36.3-1.78.3-.72,0-1.07-.36-1.07-1.12,0-.3.24-2.31.72-6.06.47-3.74.72-6.23.72-7.48,0-5.34-2.31-8.01-6.95-8.01-2.37,0-4.68.72-6.88,2.14-2.2,1.42-4.09,3.62-5.7,6.59.42-3.14.59-5.04.59-5.64,0-1.13-.47-1.9-1.42-2.37s-2.73-.72-5.28-.72-4.45.18-5.7.47c-1.25.3-2.02.72-2.37,1.25-.36.53-.53,1.36-.53,2.5,0,.66.24,1.19.77,1.61h0Z" style="fill: #fff;"/> </g> <g> <path d="M100.32,78.73c.43-.58.96-1.04,1.59-1.37s1.31-.49,2.05-.49c.9,0,1.63.24,2.18.71.55.47.87,1.12.94,1.94h-2.03c-.09-.31-.26-.55-.51-.71s-.55-.24-.91-.24c-.57,0-1.06.2-1.47.59s-.69.91-.8,1.57c-.04.2-.05.38-.05.53,0,.5.14.9.42,1.2.28.29.66.45,1.15.45.35,0,.68-.08.99-.25s.56-.4.77-.72h2.03c-.36.82-.9,1.47-1.63,1.93-.73.47-1.54.71-2.44.71-.65,0-1.21-.12-1.69-.38-.48-.25-.85-.61-1.11-1.07-.26-.46-.39-.99-.39-1.61,0-.27.02-.54.07-.8.13-.74.41-1.42.84-2h-.01Z" style="fill: #fff;"/> <path d="M112.01,83.19h-2.82l-.69,1.34h-1.93l4.07-7.57h2.14l1.4,7.57h-1.95l-.22-1.34h0ZM111.8,81.79l-.45-2.8-1.44,2.8h1.89Z" style="fill: #fff;"/> <path d="M120.91,80.6c-.26.36-.63.66-1.08.88-.46.23-.99.34-1.61.34h-1.15l-.49,2.71h-1.85l1.34-7.57h2.98c.79,0,1.39.18,1.79.53.4.35.61.82.61,1.42,0,.18-.01.34-.04.5-.07.44-.24.84-.5,1.2h0ZM119.54,79.39c.01-.12.02-.2.02-.25,0-.23-.07-.41-.22-.53-.15-.12-.37-.19-.67-.19h-1l-.34,1.94h.99c.69,0,1.09-.32,1.22-.97h0Z" style="fill: #fff;"/> <path d="M124.43,84.06c-.51-.36-.77-.86-.77-1.52,0-.07,0-.16.02-.29h1.92c-.02.27.04.49.2.65s.38.24.69.24c.28,0,.5-.06.66-.18s.24-.29.24-.52-.1-.42-.31-.56c-.2-.15-.53-.31-.96-.49-.42-.18-.76-.34-1.02-.49-.26-.15-.49-.36-.69-.63s-.29-.6-.29-1c0-.5.12-.93.36-1.29s.6-.65,1.04-.84.96-.29,1.53-.29c.52,0,.98.08,1.38.24.4.16.72.39.94.7.23.31.34.66.34,1.09,0,.11,0,.19,0,.24h-1.96s0-.07,0-.13c0-.2-.07-.36-.21-.49s-.34-.19-.58-.19c-.26,0-.47.07-.63.19-.16.12-.24.3-.24.51s.1.39.3.55c.2.15.51.32.94.51.42.2.77.37,1.04.54s.5.39.69.66c.2.28.29.61.29,1.02,0,.45-.12.85-.36,1.2-.23.35-.58.63-1.02.82-.45.2-.96.3-1.56.3-.82,0-1.49-.18-2-.53v-.02Z" style="fill: #fff;"/> <path d="M133.01,76.96l-.8,4.52c-.03.19-.04.31-.04.39,0,.33.09.58.28.76.19.18.47.26.83.26.43,0,.78-.12,1.06-.36s.45-.59.53-1.04l.8-4.52h1.85l-.8,4.52c-.12.69-.36,1.26-.73,1.73-.36.47-.8.82-1.33,1.05-.52.23-1.09.34-1.7.34-.79,0-1.43-.2-1.91-.61s-.73-1-.73-1.78c0-.23.02-.47.07-.73l.79-4.52h1.85,0Z" style="fill: #fff;"/> <path d="M143.41,77.49c.41.36.61.82.61,1.39,0,.17-.01.32-.04.47-.09.5-.31.95-.66,1.35s-.82.68-1.42.84l1.22,3h-2.08l-1.07-2.86h-.45l-.51,2.86h-1.85l1.34-7.57h3.09c.78,0,1.38.18,1.79.53h.01ZM142.11,79.19c0-.23-.07-.41-.22-.53-.15-.12-.36-.19-.65-.19h-1.15l-.34,1.9h1.14c.34,0,.61-.08.8-.25s.33-.4.39-.7c.01-.12.02-.19.02-.23Z" style="fill: #fff;"/> <path d="M148.26,83.12h2.42l-.25,1.4h-4.26l1.34-7.57h1.85l-1.09,6.17h0Z" style="fill: #fff;"/> <path d="M153.96,78.41l-.27,1.58h2.47l-.25,1.39h-2.47l-.3,1.69h2.79l-.26,1.45h-4.63l1.34-7.57h4.63l-.26,1.45h-2.8Z" style="fill: #fff;"/> <path d="M165.09,76.96l-.26,1.45h-3.09l-.28,1.63h2.31l-.26,1.4h-2.31l-.54,3.09h-1.85l1.34-7.57h4.93Z" style="fill: #fff;"/> <path d="M169.4,83.19h-2.82l-.69,1.34h-1.93l4.08-7.57h2.14l1.4,7.57h-1.95l-.22-1.34ZM169.19,81.79l-.45-2.8-1.44,2.8h1.89Z" style="fill: #fff;"/> <path d="M178.35,77.49c.41.36.61.82.61,1.39,0,.17-.01.32-.04.47-.09.5-.31.95-.66,1.35-.35.39-.82.68-1.42.84l1.22,3h-2.08l-1.07-2.86h-.45l-.5,2.86h-1.85l1.34-7.57h3.09c.78,0,1.38.18,1.79.53h0ZM177.06,79.19c0-.23-.07-.41-.22-.53-.15-.12-.36-.19-.65-.19h-1.15l-.34,1.9h1.15c.34,0,.61-.08.8-.25.2-.17.33-.4.38-.7.01-.12.02-.19.02-.23Z" style="fill: #fff;"/> <path d="M192.86,76.96l-3.31,7.57h-2.23l-.34-4.97-2.12,4.97h-2.23l-.58-7.57h1.97l.12,5.51,2.32-5.51h2.04l.32,5.48,2.06-5.48h2Z" style="fill: #fff;"/> <path d="M195.1,78.41l-.27,1.58h2.47l-.25,1.39h-2.47l-.3,1.69h2.79l-.26,1.45h-4.63l1.34-7.57h4.63l-.26,1.45h-2.8Z" style="fill: #fff;"/> <path d="M198.75,84.06c-.51-.36-.77-.86-.77-1.52,0-.07,0-.16.02-.29h1.92c-.02.27.04.49.2.65s.38.24.69.24c.28,0,.5-.06.66-.18s.24-.29.24-.52-.1-.42-.31-.56c-.2-.15-.53-.31-.96-.49-.42-.18-.76-.34-1.02-.49s-.49-.36-.69-.63-.29-.6-.29-1c0-.5.12-.93.36-1.29s.6-.65,1.04-.84.96-.29,1.53-.29c.52,0,.98.08,1.38.24s.72.39.94.7c.22.31.34.66.34,1.09,0,.11,0,.19,0,.24h-1.96s0-.07,0-.13c0-.2-.07-.36-.21-.49s-.34-.19-.58-.19c-.26,0-.47.07-.63.19s-.24.3-.24.51.1.39.3.55c.2.15.51.32.94.51.42.2.77.37,1.04.54s.5.39.69.66c.2.28.29.61.29,1.02,0,.45-.12.85-.36,1.2s-.58.63-1.02.82c-.45.2-.97.3-1.56.3-.82,0-1.49-.18-2-.53v-.02Z" style="fill: #fff;"/> <path d="M210.97,76.96l-.25,1.45h-2.01l-1.08,6.11h-1.85l1.08-6.11h-2.01l.26-1.45h5.86Z" style="fill: #fff;"/> </g> </g> <path d="M52.11,22.1h0c-9.6,1.53-18.66,15.98-20.39,32.75-1.15,11.08,1.2,21.06,6.16,26.04,2.39,2.42,5.28,3.52,8.38,3.23,8.65-.85,17.01-12.35,20.11-26.78.42-1.97.74-4.01.96-6.07.04-.33.07-.66.09-.99s.32-.61.66-.6c1.36.04,2.71-.01,4.04-.15,6.33-.68,10.68-3.05,15.11-7.97.28-.31.58-.65.87-1.01.17-.2.51-.11.54.15.45,3.32.58,6.74.39,10.18-1.41,25.88-20.18,48.13-41.83,49.58-.74.05-1.47.08-2.2.08-8.43,0-16.34-3.28-22.49-9.37-8.45-8.35-12.86-21.14-12.11-35.06C11.81,30.24,30.57,7.99,52.24,6.53c2.93-.19,5.79,0,8.54.55-4.21,4.83-.28,11.57-.28,11.57-.79-5.04,1.05-7.97,3.05-9.62.59-.49,1.26-.88,1.95-1.2l.1-.05.28-.13c6.48-2.54,11.21-3.04,11.21-3.04l-4.83,6.2-.7.9s.02.02.04.03c.23-.27.53-.58.85-.93,0,0,.01,0,.02.01,2.34-2.56,5.45-4.98,7.68-6.08,3.33-1.64,7.23-2.59,9.84-.59,4.64,3.55,7.45,12.42,7.45,12.42,0,0-4.7,6.76-13.11,10.67-2.93,1.36-6.24,2.5-9.85,3.09-8.15,1.32-10.73-8.54-19.84-8.59-.83,0-1.66.1-2.48.32-.02,0-.05,0-.08.02h.01Z" style="fill: #fff;"/> <path d="M94.89,22.37c-1.57,2.49-5.01,9.08-9.43,13.87s-8.78,7.28-15.12,7.96c-10.55,1.12-23.22-3.71-25.02-9.56-1.71-5.52,7.05-11.84,13.25-9.08,5.06,2.25,8.69,10.06,19.28,6.75,10.38-3.24,16.82-9.7,17.04-9.94h0Z" style="fill: #fff;"/> </g> <path d="M106.87,16.62c-7.57,5-14.2,13.43-14.4,13.69.15-.4,8.65-21.81,15.97-22.88,7.39-1.08,4.99,4.86-1.57,9.19h0Z" style="fill: #fff;"/> </svg></div>
     <div>
-      <div class="ui-shell-title">Générateur de rapport journalier — O'Fun Park</div>
-      <div class="ui-shell-subtitle">Glissez votre fichier <code>STATS_OFUN_SAISON_*.xlsx</code>, puis sélectionnez un jour à présenter en Codir.</div>
+      <div class="ui-shell-title">Générateur de rapports — O'Fun Park</div>
+      <div class="ui-shell-subtitle">Glissez votre fichier <code>STATS_OFUN_SAISON_*.xlsx</code>, choisissez le mode et la période.</div>
     </div>
+  </div>
+
+  <div class="mode-tabs" id="modeTabs">
+    <button class="mode-tab active" data-mode="jour">Journalier</button>
+    <button class="mode-tab" data-mode="semaine">Hebdomadaire</button>
+    <button class="mode-tab" data-mode="mois">Mensuel</button>
   </div>
 
   <div class="file-drop" id="dropZone" role="button" tabindex="0">
@@ -281,10 +298,22 @@ button.secondary:hover { background: var(--bg-soft); }
   <input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
 
   <div class="form-block">
-    <div class="form-block-title">📅 Jour à présenter</div>
-    <div class="ui-controls">
+    <div class="form-block-title" id="periodTitle">📅 Jour à présenter</div>
+    <div class="ui-controls" id="controlsJour">
       <label for="daySelect">Jour :</label>
       <select id="daySelect" disabled>
+        <option value="">— Charger un fichier d'abord —</option>
+      </select>
+    </div>
+    <div class="ui-controls" id="controlsSemaine" style="display:none">
+      <label for="weekSelect">Semaine :</label>
+      <select id="weekSelect" style="min-width:320px" disabled>
+        <option value="">— Charger un fichier d'abord —</option>
+      </select>
+    </div>
+    <div class="ui-controls" id="controlsMois" style="display:none">
+      <label for="monthSelect">Mois :</label>
+      <select id="monthSelect" disabled>
         <option value="">— Charger un fichier d'abord —</option>
       </select>
     </div>
@@ -313,6 +342,37 @@ button.secondary:hover { background: var(--bg-soft); }
 
 <script>
 
+// ============================================
+// Données pré-saison (Avril + Mai) — injectées dans le cumul
+// photo_total_n déduit depuis photo_retro_n / 0.3
+// ============================================
+const PRESAISON = {
+  ca_total_n:    440059.07,
+  ca_total_n1:   290186.09,
+  photo_retro_n: 957.08,
+  photo_retro_n1: 0,
+  days_open_n:   31,
+  days_open_n1:  33,
+  freq_btoc_n:   9448,
+  freq_btoc_n1:  9444,
+  freq_cat_n:  { "Adulte": 6432, "Enfant": 1279, "Bout chou": 264, "Sénior": 671, "PMR": 60, "Gratuit": 76 },
+  freq_cat_n1: { "Adulte": 5746, "Enfant": 885,  "Bout chou": 275, "Sénior": 78,  "Gratuit": 278 },
+  by_cat_n:  {
+    "GUICHET": 252011.75, "RESTO": 126564.43, "SNACK": 45881.25,
+    "BOUTIQUE": 6836.25,  "GANTS": 6585.96,   "CASIER": 1222.35,
+    "PAINTBALL": 0,       "PHOTO TOTAL": 957.08,
+  },
+  by_cat_n1: {
+    "GUICHET": 186905.19, "RESTO": 70285.19,  "SNACK": 24804.44,
+    "BOUTIQUE": 1523.16,  "GANTS": 5574.81,   "CASIER": 796.02,
+    "PAINTBALL": 297.28,  "PHOTO TOTAL": 0,
+  },
+  groupes_resa_n: 0, groupes_resa_n1: 0,
+  groupes_surplace_n: 0, groupes_surplace_n1: 0,
+  groupes_total_n: 609, groupes_total_n1: 372,
+};
+
+
 // Couleurs O'Fun
 const COLOR_BRAND = "#7b170f";
 const COLOR_GOLD  = "#c98a40";
@@ -326,7 +386,6 @@ const ZONE_COLORS = {
   "RUSH WATER": "#4a6d8c",
   "SILVER LAKE": "#5fb898",
   "PIONEER BATTLE": "#7a99b3",
-  "PHOTO": "#a05030",
 };
 
 // Palette catégories PDV (telles que dans le fichier)
@@ -575,12 +634,12 @@ function computeDay(raw, version) {
       byCatN1[p.cat] = (byCatN1[p.cat] || 0) + p.ca_n1;
     }
   }
-  // Ajout PHOTO selon la version
+  // Ajout PHOTO selon la version (zone PARC depuis maj xlsx, cat PHOTO TOTAL inchangée)
   const photoVal = version === "total_photos" ? raw.photo_total_n : raw.photo_retro_n;
-  byZoneN["PHOTO"]      = (byZoneN["PHOTO"] || 0) + photoVal;
+  byZoneN["PARC"]       = (byZoneN["PARC"] || 0) + photoVal;
   byCatN["PHOTO TOTAL"] = (byCatN["PHOTO TOTAL"] || 0) + photoVal;
   // N-1 toujours en commission (pas de delta photo applicable)
-  byZoneN1["PHOTO"]      = byZoneN1["PHOTO"]      || 0;
+  byZoneN1["PARC"]       = byZoneN1["PARC"]       || 0;
   byCatN1["PHOTO TOTAL"] = byCatN1["PHOTO TOTAL"] || 0;
 
   // Panier moyen global
@@ -662,17 +721,151 @@ function computeCumul(allDays, datedSheets, currentSheet, version) {
         cumul.by_cat_n1[p.cat] = (cumul.by_cat_n1[p.cat] || 0) + p.ca_n1;
       }
     }
-    // Photo selon version
+    // Photo selon version (zone PARC depuis maj xlsx, cat PHOTO TOTAL inchangée)
     const photoVal = version === "total_photos" ? raw.photo_total_n : raw.photo_retro_n;
-    cumul.by_zone_n["PHOTO"]      = (cumul.by_zone_n["PHOTO"]      || 0) + photoVal;
+    cumul.by_zone_n["PARC"]       = (cumul.by_zone_n["PARC"]       || 0) + photoVal;
     cumul.by_cat_n["PHOTO TOTAL"] = (cumul.by_cat_n["PHOTO TOTAL"] || 0) + photoVal;
   }
+
+  // Injection données pré-saison (Avril + Mai)
+  const ps_photo_total = PRESAISON.photo_retro_n > 0 ? PRESAISON.photo_retro_n / 0.3 : 0;
+  cumul.ca_n_commission  += PRESAISON.ca_total_n;
+  cumul.ca_n_total_photo += PRESAISON.ca_total_n - PRESAISON.photo_retro_n + ps_photo_total;
+  cumul.ca_n1            += PRESAISON.ca_total_n1;
+  cumul.photo_total_n    += ps_photo_total;
+  cumul.photo_retro_n    += PRESAISON.photo_retro_n;
+  cumul.freq_btoc_n      += PRESAISON.freq_btoc_n;
+  cumul.freq_btoc_n1     += PRESAISON.freq_btoc_n1;
+  cumul.days_open_n      += PRESAISON.days_open_n;
+  cumul.days_analyzed    += PRESAISON.days_open_n;
+  cumul.groupes_resa_n      += PRESAISON.groupes_resa_n;
+  cumul.groupes_resa_n1     += PRESAISON.groupes_resa_n1;
+  cumul.groupes_surplace_n  += PRESAISON.groupes_surplace_n;
+  cumul.groupes_surplace_n1 += PRESAISON.groupes_surplace_n1;
+  cumul.groupes_total_n     += PRESAISON.groupes_total_n;
+  cumul.groupes_total_n1    += PRESAISON.groupes_total_n1;
+  for (const k of Object.keys(cumul.freq_cat_n))  cumul.freq_cat_n[k]  += PRESAISON.freq_cat_n[k]  || 0;
+  for (const k of Object.keys(cumul.freq_cat_n1)) cumul.freq_cat_n1[k] += PRESAISON.freq_cat_n1[k] || 0;
+  for (const [cat, val] of Object.entries(PRESAISON.by_cat_n))  cumul.by_cat_n[cat]  = (cumul.by_cat_n[cat]  || 0) + val;
+  for (const [cat, val] of Object.entries(PRESAISON.by_cat_n1)) cumul.by_cat_n1[cat] = (cumul.by_cat_n1[cat] || 0) + val;
 
   cumul.ca_n = version === "commission" ? cumul.ca_n_commission : cumul.ca_n_total_photo;
   cumul.panier_n  = cumul.freq_btoc_n  ? cumul.ca_n  / cumul.freq_btoc_n   : 0;
   cumul.panier_n1 = cumul.freq_btoc_n1 ? cumul.ca_n1 / cumul.freq_btoc_n1 : 0;
 
   return cumul;
+}
+
+
+// ============================================
+// Helpers ISO semaine / mois
+// ============================================
+function getISOWeek(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const jan1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return { week: Math.ceil((((d - jan1) / 86400000) + 1) / 7), year: d.getUTCFullYear() };
+}
+
+function groupByWeek(datedSheets) {
+  const map = {};
+  for (const s of datedSheets) {
+    const { week, year } = getISOWeek(s.date);
+    const key = `${year}-W${String(week).padStart(2, "0")}`;
+    if (!map[key]) map[key] = { key, week, year, sheets: [] };
+    map[key].sheets.push(s);
+  }
+  return Object.values(map).sort((a, b) => a.key.localeCompare(b.key));
+}
+
+function groupByMonth(datedSheets) {
+  const map = {};
+  for (const s of datedSheets) {
+    const key = `${s.date.getFullYear()}-${String(s.date.getMonth() + 1).padStart(2, "0")}`;
+    if (!map[key]) map[key] = { key, year: s.date.getFullYear(), month: s.date.getMonth(), sheets: [] };
+    map[key].sheets.push(s);
+  }
+  return Object.values(map).sort((a, b) => a.key.localeCompare(b.key));
+}
+
+// ============================================
+// COMPUTE agrégat (semaine ou mois)
+// ============================================
+function computeAggregate(allDays, sheets, version) {
+  const agg = {
+    ca_n: 0, ca_n1: 0,
+    ca_n_commission: 0, ca_n_total_photo: 0,
+    photo_total_n: 0, photo_retro_n: 0,
+    freq_btoc_n: 0, freq_btoc_n1: 0,
+    groupes_total_n: 0, groupes_total_n1: 0,
+    groupes_resa_n: 0, groupes_resa_n1: 0,
+    groupes_surplace_n: 0, groupes_surplace_n1: 0,
+    by_zone_n: {}, by_zone_n1: {},
+    by_cat_n: {}, by_cat_n1: {},
+    by_pdv_n: {},
+    freq_cat_n:  { "Adulte": 0, "Enfant": 0, "Bout chou": 0, "Sénior": 0, "PMR": 0, "Gratuit": 0 },
+    freq_cat_n1: { "Adulte": 0, "Enfant": 0, "Bout chou": 0, "Sénior": 0, "Gratuit": 0 },
+    days: [],
+    days_open: 0,
+    days_count: sheets.length,
+  };
+
+  for (const { sheet, date } of sheets) {
+    const raw = allDays[sheet];
+    if (!raw) continue;
+
+    const ca_commission  = raw.ca_total_n;
+    const ca_total_photo = raw.ca_total_n - raw.photo_retro_n + raw.photo_total_n;
+    const day_ca = version === "commission" ? ca_commission : ca_total_photo;
+
+    agg.ca_n_commission  += ca_commission;
+    agg.ca_n_total_photo += ca_total_photo;
+    agg.ca_n1            += raw.ca_total_n1;
+    agg.photo_total_n    += raw.photo_total_n;
+    agg.photo_retro_n    += raw.photo_retro_n;
+    agg.freq_btoc_n      += raw.freq_btoc_n;
+    agg.freq_btoc_n1     += raw.freq_btoc_n1;
+    if (day_ca > 0) agg.days_open++;
+
+    agg.groupes_total_n    += raw.groupes.total_n;
+    agg.groupes_total_n1   += raw.groupes.total_n1;
+    agg.groupes_resa_n     += raw.groupes.reserves_n;
+    agg.groupes_resa_n1    += raw.groupes.reserves_n1;
+    agg.groupes_surplace_n  += raw.groupes.surplace_n;
+    agg.groupes_surplace_n1 += raw.groupes.surplace_n1;
+
+    for (const k of Object.keys(agg.freq_cat_n))  agg.freq_cat_n[k]  += raw.freq_cat_n[k]  || 0;
+    for (const k of Object.keys(agg.freq_cat_n1)) agg.freq_cat_n1[k] += raw.freq_cat_n1[k] || 0;
+
+    for (const p of raw.pdvs) {
+      if (/PHOTOS?\s+VENDUES/i.test(p.pdv)) continue;
+      if (p.zone && p.zone !== "nan") {
+        agg.by_zone_n[p.zone]  = (agg.by_zone_n[p.zone]  || 0) + p.ca_n;
+        agg.by_zone_n1[p.zone] = (agg.by_zone_n1[p.zone] || 0) + p.ca_n1;
+      }
+      if (p.cat && p.cat !== "nan") {
+        agg.by_cat_n[p.cat]  = (agg.by_cat_n[p.cat]  || 0) + p.ca_n;
+        agg.by_cat_n1[p.cat] = (agg.by_cat_n1[p.cat] || 0) + p.ca_n1;
+      }
+      if (p.pdv) {
+        if (!agg.by_pdv_n[p.pdv]) agg.by_pdv_n[p.pdv] = { ca_n: 0, ca_n1: 0, cat: p.cat };
+        agg.by_pdv_n[p.pdv].ca_n  += p.ca_n;
+        agg.by_pdv_n[p.pdv].ca_n1 += p.ca_n1;
+      }
+    }
+    const photoVal = version === "total_photos" ? raw.photo_total_n : raw.photo_retro_n;
+    agg.by_zone_n["PARC"]       = (agg.by_zone_n["PARC"]       || 0) + photoVal;
+    agg.by_cat_n["PHOTO TOTAL"] = (agg.by_cat_n["PHOTO TOTAL"] || 0) + photoVal;
+
+    agg.days.push({ date, ca_n: day_ca, ca_n1: raw.ca_total_n1, freq_n: raw.freq_btoc_n, freq_n1: raw.freq_btoc_n1 });
+  }
+
+  agg.ca_n    = version === "commission" ? agg.ca_n_commission : agg.ca_n_total_photo;
+  agg.panier_n  = agg.freq_btoc_n  ? agg.ca_n  / agg.freq_btoc_n  : 0;
+  agg.panier_n1 = agg.freq_btoc_n1 ? agg.ca_n1 / agg.freq_btoc_n1 : 0;
+
+  return agg;
 }
 
 
@@ -1139,22 +1332,415 @@ function renderPage4(ctx) {
 
 
 // ============================================
+// SVG histogramme jour par jour
+// ============================================
+function renderDayByDayBars(days, isMoney) {
+  if (!days.length) return "";
+  const vals = days.map(d => isMoney ? [d.ca_n, d.ca_n1 || 0] : [d.freq_n, d.freq_n1 || 0]);
+  const maxV = Math.max(...vals.flat(), 1);
+  const n = days.length;
+  const W = 560, H = 130, padL = 32, padR = 8, padT = 15, padB = 28;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+  const slotW  = chartW / n;
+  const bW = Math.max(3, Math.floor(slotW * 0.38));
+  const fmt = isMoney ? fmtMoneyK : (v) => fmtNum(v);
+
+  let svg = `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + chartH}" stroke="#d3d1c7" stroke-width="0.5"/>`;
+  svg += `<text x="${padL - 3}" y="${padT + 4}" font-size="8" fill="#888780" text-anchor="end">${fmt(maxV)}</text>`;
+  svg += `<text x="${padL - 3}" y="${padT + chartH}" font-size="8" fill="#888780" text-anchor="end">0</text>`;
+  svg += `<line x1="${padL}" y1="${padT + chartH}" x2="${W - padR}" y2="${padT + chartH}" stroke="#d3d1c7" stroke-width="0.5"/>`;
+
+  for (let i = 0; i < n; i++) {
+    const [vN, vN1] = vals[i];
+    const cx = padL + i * slotW + slotW / 2;
+    const hN  = vN  ? vN  / maxV * chartH : 0;
+    const hN1 = vN1 ? vN1 / maxV * chartH : 0;
+    svg += `<rect x="${(cx - bW - 1).toFixed(1)}" y="${(padT + chartH - hN1).toFixed(1)}" width="${bW}" height="${Math.max(hN1, 0.5).toFixed(1)}" fill="#cca09c"/>`;
+    svg += `<rect x="${(cx + 1).toFixed(1)}" y="${(padT + chartH - hN).toFixed(1)}" width="${bW}" height="${Math.max(hN, 0.5).toFixed(1)}" fill="${COLOR_BRAND}"/>`;
+    const d = days[i].date;
+    svg += `<text x="${cx.toFixed(1)}" y="${H - 14}" font-size="7.5" fill="#888780" text-anchor="middle">${d.getDate()}</text>`;
+    if (i === 0 || d.getDate() === 1) {
+      svg += `<text x="${cx.toFixed(1)}" y="${H - 5}" font-size="7" fill="#5f5e5a" text-anchor="middle">${MOIS_FR[d.getMonth()].slice(0, 3)}.</text>`;
+    }
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px">${svg}</svg>`;
+}
+
+// ============================================
+// RENDER HEBDO / MENSUEL — header / footer
+// ============================================
+function renderAggHeader(ctx, pageNum, totalPages) {
+  const versionLabel = ctx.version === "commission" ? "COMMISSION PHOTOS" : "TOTAL PHOTOS";
+  return `
+    <div class="r-header">
+      <div class="r-header-left">
+        <div class="r-logo">${LOGO_SVG}</div>
+        <div>
+          <div class="r-overtitle">RAPPORT ${ctx.modeLabel} — O'FUN PARK</div>
+          <div class="r-title">${ctx.periodLabel}</div>
+          <div class="r-subtitle">${versionLabel} · ${ctx.agg.days_open} jour${ctx.agg.days_open > 1 ? "s" : ""} d'ouverture</div>
+        </div>
+      </div>
+      <div class="r-header-right">Page ${pageNum} / ${totalPages}<br>Présentation Codir</div>
+    </div>`;
+}
+function renderAggFooter(ctx, pageNum, totalPages) {
+  return `<div class="footer-page">
+    <span>O'Fun Park · ${ctx.modeLabel} · ${ctx.periodLabel}</span>
+    <span>Page ${pageNum} / ${totalPages}</span>
+  </div>`;
+}
+
+// Page 1 — KPIs
+function renderAggPage1(ctx, totalPages) {
+  const { agg } = ctx;
+  const evolCa     = pctEvol(agg.ca_n, agg.ca_n1);
+  const evolFreq   = pctEvol(agg.freq_btoc_n, agg.freq_btoc_n1);
+  const evolPanier = pctEvol(agg.panier_n, agg.panier_n1);
+  const evolGrp    = pctEvol(agg.groupes_total_n, agg.groupes_total_n1);
+  const otherLabel = ctx.version === "commission" ? "Avec total photos" : "Avec commission perçue";
+  const otherVal   = ctx.version === "commission" ? agg.ca_n_total_photo : agg.ca_n_commission;
+
+  return `
+    <div class="page-content">
+      ${renderAggHeader(ctx, 1, totalPages)}
+
+      <div class="r-section-label">1 — PERFORMANCE ${ctx.modeLabel.toUpperCase()}</div>
+      <div class="r-block">
+        <div class="perf-row">
+          <div>
+            <div class="perf-label">CA HT total</div>
+            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+              <div class="big-number">${fmtMoney(agg.ca_n)}</div>
+              ${badge(evolCa)}
+            </div>
+            <div class="perf-meta">N-1 : ${fmtMoney(agg.ca_n1)} · Écart : ${agg.ca_n - agg.ca_n1 >= 0 ? "+" : ""}${fmtMoney(agg.ca_n - agg.ca_n1)}</div>
+            <div class="perf-meta" style="margin-top:6px;"><span style="color:var(--text-tertiary)">${otherLabel} : ${fmtMoney(otherVal)}</span></div>
+          </div>
+          <div>${renderCompareBars(agg.ca_n1, agg.ca_n, true)}</div>
+        </div>
+      </div>
+
+      <div class="r-section-label">2 — FRÉQUENTATION</div>
+      <div class="r-block-grid">
+        <div class="r-block boutique-card" style="border-top:3px solid ${COLOR_BRAND};">
+          <div class="boutique-title" style="color:${COLOR_BRAND};">● Entrées BTOC (hors groupes)</div>
+          <div style="display:grid;grid-template-columns:1fr 220px;gap:1rem;align-items:center;">
+            <div>
+              <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+                <div class="big-number mid">${fmtNum(agg.freq_btoc_n)} <span style="font-size:14px;color:var(--text-secondary)">entrées</span></div>
+                ${badge(evolFreq)}
+              </div>
+              <div class="perf-meta">N-1 : ${fmtNum(agg.freq_btoc_n1)} · Écart : ${agg.freq_btoc_n - agg.freq_btoc_n1 >= 0 ? "+" : ""}${agg.freq_btoc_n - agg.freq_btoc_n1}</div>
+            </div>
+            <div>${renderCompareBars(agg.freq_btoc_n1, agg.freq_btoc_n)}</div>
+          </div>
+        </div>
+        <div class="r-block boutique-card" style="border-top:3px solid ${COLOR_GOLD};">
+          <div class="boutique-title" style="color:${COLOR_GOLD};">● Groupes</div>
+          <div style="display:grid;grid-template-columns:1fr 220px;gap:1rem;align-items:center;">
+            <div>
+              <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+                <div class="big-number mid">${fmtNum(agg.groupes_total_n)} <span style="font-size:14px;color:var(--text-secondary)">personnes</span></div>
+                ${badge(evolGrp)}
+              </div>
+              <div class="perf-meta">N-1 : ${fmtNum(agg.groupes_total_n1)}</div>
+            </div>
+            <div>${renderCompareBars(agg.groupes_total_n1, agg.groupes_total_n)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="r-section-label">3 — PANIER MOYEN GLOBAL HT</div>
+      <div class="r-block">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;align-items:end;">
+          <div>
+            <div class="kpi-label">Panier moyen N</div>
+            <div class="kpi-value" style="font-size:22px;">${fmtMoney(agg.panier_n)}</div>
+            <div class="perf-meta" style="font-size:10px;">CA total ÷ fréquentation BTOC</div>
+          </div>
+          <div>
+            <div class="kpi-label">Panier moyen N-1</div>
+            <div class="kpi-value" style="font-size:22px;">${fmtMoney(agg.panier_n1)}</div>
+          </div>
+          <div>
+            <div class="kpi-label">Évolution</div>
+            <div style="font-size:22px;">${badge(evolPanier)}</div>
+            <div class="perf-meta" style="font-size:10px;">Écart : ${agg.panier_n - agg.panier_n1 >= 0 ? "+" : ""}${fmtMoney(agg.panier_n - agg.panier_n1)}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${renderAggFooter(ctx, 1, totalPages)}`;
+}
+
+// Page 2 — Répartitions CA + PDV
+function renderAggPage2(ctx, totalPages) {
+  const { agg } = ctx;
+  const freq = agg.freq_btoc_n;
+
+  let panierRows = "";
+  for (const [cat, ca] of Object.entries(agg.by_cat_n).sort((a, b) => b[1] - a[1]).filter(([, v]) => v > 0)) {
+    const pm = freq ? ca / freq : 0;
+    panierRows += `<tr><td><span class="cat-dot" style="background:${CAT_COLORS[cat] || "#aaa"}"></span>${cat}</td><td>${fmtMoney(ca)}</td><td>${fmtMoney(pm)}</td></tr>`;
+  }
+
+  let pdvRows = "";
+  for (const [pdv, v] of Object.entries(agg.by_pdv_n).sort((a, b) => b[1].ca_n - a[1].ca_n)) {
+    if (v.ca_n === 0 && v.ca_n1 === 0) continue;
+    const evol = pctEvol(v.ca_n, v.ca_n1);
+    const pm = freq ? v.ca_n / freq : 0;
+    const pdvDisp = pdv.length <= 55 ? pdv : pdv.slice(0, 53) + "…";
+    pdvRows += `<tr>
+      <td class="pdv">${pdvDisp}</td>
+      <td>${fmtMoney(v.ca_n)}</td><td>${fmtMoney(v.ca_n1)}</td>
+      <td>${badge(evol)}</td><td>${fmtMoney(pm)}</td>
+    </tr>`;
+  }
+
+  return `
+    <div class="page-content">
+      ${renderAggHeader(ctx, 2, totalPages)}
+
+      <div class="r-section-label">4 — RÉPARTITION DU CA PAR ZONE</div>
+      <div class="r-block">
+        <div class="cat-row">
+          <div>${renderRepartTable(agg.by_zone_n, ZONE_COLORS)}</div>
+          <div class="donut-wrap">${renderDonut(agg.by_zone_n, ZONE_COLORS, 160)}</div>
+        </div>
+      </div>
+
+      <div class="r-section-label">5 — RÉPARTITION DU CA PAR CATÉGORIE DE PDV</div>
+      <div class="r-block">
+        <div class="cat-row">
+          <div>${renderRepartTable(agg.by_cat_n, CAT_COLORS, ["Catégorie", "CA HT", "%"])}</div>
+          <div class="donut-wrap">${renderDonut(agg.by_cat_n, CAT_COLORS, 160)}</div>
+        </div>
+      </div>
+
+      <div class="r-section-label">6 — PANIER MOYEN HT PAR CATÉGORIE DE PDV</div>
+      <div class="r-block">
+        <table class="cat-table">
+          <thead><tr><th>Catégorie PDV</th><th>CA HT</th><th>Panier moyen</th></tr></thead>
+          <tbody>${panierRows}</tbody>
+        </table>
+      </div>
+
+      <div class="r-section-label">7 — DÉTAIL PAR POINT DE VENTE</div>
+      <div class="r-block">
+        <table class="cat-table pdv-table">
+          <thead><tr><th>Point de vente</th><th>CA N</th><th>CA N-1</th><th>Évol.</th><th>Panier moy. N</th></tr></thead>
+          <tbody>${pdvRows}</tbody>
+        </table>
+      </div>
+    </div>
+    ${renderAggFooter(ctx, 2, totalPages)}`;
+}
+
+// Page 3 — Clientèle + Groupes
+function renderAggPage3(ctx, totalPages) {
+  const { agg } = ctx;
+  const totalN  = Object.values(agg.freq_cat_n).reduce((s, v) => s + v, 0);
+  const totalN1 = Object.values(agg.freq_cat_n1).reduce((s, v) => s + v, 0);
+
+  let rows = "";
+  for (const cat of ["Adulte", "Enfant", "Bout chou", "Sénior", "PMR", "Gratuit"]) {
+    const n  = agg.freq_cat_n[cat]  || 0;
+    const n1 = (cat === "PMR") ? null : (agg.freq_cat_n1[cat] || 0);
+    const col = VISITOR_COLORS[cat] || "#aaa";
+    const pn = totalN ? n / totalN * 100 : 0;
+    if (n1 === null) {
+      rows += `<tr><td><span class="cat-dot" style="background:${col}"></span>${cat}</td><td>${Math.round(n)}</td><td>${pn.toFixed(1).replace(".", ",")} %</td><td style="color:var(--text-tertiary)">—</td><td style="color:var(--text-tertiary)">non dispo</td><td>${badge(null)}</td></tr>`;
+    } else {
+      const pn1 = totalN1 ? n1 / totalN1 * 100 : 0;
+      rows += `<tr><td><span class="cat-dot" style="background:${col}"></span>${cat}</td><td>${Math.round(n)}</td><td>${pn.toFixed(1).replace(".", ",")} %</td><td>${Math.round(n1)}</td><td>${pn1.toFixed(1).replace(".", ",")} %</td><td>${badge(pctEvol(n, n1))}</td></tr>`;
+    }
+  }
+
+  return `
+    <div class="page-content">
+      ${renderAggHeader(ctx, 3, totalPages)}
+
+      <div class="r-section-label">8 — RÉPARTITION DES ENTRÉES BTOC PAR CATÉGORIE VISITEUR</div>
+      <div class="r-block-grid">
+        <div class="r-block boutique-card" style="border-top:3px solid ${COLOR_BRAND};">
+          <div class="boutique-title" style="color:${COLOR_BRAND};">● Année N</div>
+          <div style="display:grid;grid-template-columns:1fr 130px;gap:0.5rem;align-items:center;">
+            <div>${renderRepartFreqTable(agg.freq_cat_n, VISITOR_COLORS, totalN)}</div>
+            <div class="donut-wrap">${renderDonut(agg.freq_cat_n, VISITOR_COLORS, 120)}</div>
+          </div>
+        </div>
+        <div class="r-block boutique-card" style="border-top:3px solid #cca09c;">
+          <div class="boutique-title" style="color:#888780;">● Année N-1</div>
+          <div style="display:grid;grid-template-columns:1fr 130px;gap:0.5rem;align-items:center;">
+            <div>${renderRepartFreqTable({...agg.freq_cat_n1}, VISITOR_COLORS, totalN1)}</div>
+            <div class="donut-wrap">${renderDonut({...agg.freq_cat_n1}, VISITOR_COLORS, 120)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="r-section-label">9 — COMPARAISON DÉTAILLÉE N vs N-1</div>
+      <div class="r-block">
+        <table class="cat-table cmp-table">
+          <thead><tr><th>Catégorie visiteur</th><th>N</th><th>% N</th><th>N-1</th><th>% N-1</th><th>Évolution</th></tr></thead>
+          <tbody>${rows}
+            <tr class="total"><td>Total</td><td>${Math.round(totalN)}</td><td>100 %</td><td>${Math.round(totalN1)}</td><td>100 %</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="r-section-label">10 — GROUPES</div>
+      <div class="r-block">
+        <table class="cat-table cumul-grp-table">
+          <thead><tr><th></th><th>N</th><th>N-1</th><th>Évolution</th></tr></thead>
+          <tbody>
+            <tr><td>Réservés</td><td>${fmtNum(agg.groupes_resa_n)}</td><td>${fmtNum(agg.groupes_resa_n1)}</td><td>${badge(pctEvol(agg.groupes_resa_n, agg.groupes_resa_n1))}</td></tr>
+            <tr><td>Sur place</td><td>${fmtNum(agg.groupes_surplace_n)}</td><td>${fmtNum(agg.groupes_surplace_n1)}</td><td>${badge(pctEvol(agg.groupes_surplace_n, agg.groupes_surplace_n1))}</td></tr>
+            <tr class="total"><td>Total</td><td>${fmtNum(agg.groupes_total_n)}</td><td>${fmtNum(agg.groupes_total_n1)}</td><td>${badge(pctEvol(agg.groupes_total_n, agg.groupes_total_n1))}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    ${renderAggFooter(ctx, 3, totalPages)}`;
+}
+
+// Page 4 HEBDO — tableau jour par jour
+function renderWeekPage4(ctx) {
+  const { agg } = ctx;
+  const totalPages = 4;
+  let rows = "";
+  for (const d of agg.days) {
+    rows += `<tr>
+      <td>${capitalize(JOURS_FR[d.date.getDay()])} ${d.date.getDate()} ${MOIS_FR[d.date.getMonth()]}</td>
+      <td>${fmtMoney(d.ca_n)}</td><td>${fmtMoney(d.ca_n1)}</td><td>${badge(pctEvol(d.ca_n, d.ca_n1))}</td>
+      <td>${fmtNum(d.freq_n)}</td><td>${fmtNum(d.freq_n1)}</td><td>${badge(pctEvol(d.freq_n, d.freq_n1))}</td>
+    </tr>`;
+  }
+  rows += `<tr class="total">
+    <td>Total semaine</td>
+    <td>${fmtMoney(agg.ca_n)}</td><td>${fmtMoney(agg.ca_n1)}</td><td>${badge(pctEvol(agg.ca_n, agg.ca_n1))}</td>
+    <td>${fmtNum(agg.freq_btoc_n)}</td><td>${fmtNum(agg.freq_btoc_n1)}</td><td>${badge(pctEvol(agg.freq_btoc_n, agg.freq_btoc_n1))}</td>
+  </tr>`;
+
+  const legend = `<div class="perf-meta" style="margin-top:8px;font-size:10px;display:flex;gap:16px;">
+    <span><span style="display:inline-block;width:10px;height:10px;background:#cca09c;border-radius:2px;margin-right:4px;"></span>N-1</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:${COLOR_BRAND};border-radius:2px;margin-right:4px;"></span>N</span>
+  </div>`;
+
+  return `
+    <div class="page-content">
+      ${renderAggHeader(ctx, 4, totalPages)}
+
+      <div class="r-section-label">11 — DÉTAIL JOUR PAR JOUR</div>
+      <div class="r-block">
+        <table class="cat-table" style="font-size:11px;">
+          <thead><tr><th>Jour</th><th>CA N</th><th>CA N-1</th><th>Évol. CA</th><th>Fréq. N</th><th>Fréq. N-1</th><th>Évol. fréq.</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+
+      <div class="r-section-label">12 — CA HT PAR JOUR (N vs N-1)</div>
+      <div class="r-block">
+        ${renderDayByDayBars(agg.days, true)}
+        ${legend}
+      </div>
+    </div>
+    ${renderAggFooter(ctx, 4, totalPages)}`;
+}
+
+// Page 4 MENSUEL — histogrammes CA + fréquentation
+function renderMonthPage4(ctx) {
+  const { agg } = ctx;
+  const totalPages = 4;
+  const legend = `<div class="perf-meta" style="margin-top:8px;font-size:10px;display:flex;gap:16px;">
+    <span><span style="display:inline-block;width:10px;height:10px;background:#cca09c;border-radius:2px;margin-right:4px;"></span>N-1</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:${COLOR_BRAND};border-radius:2px;margin-right:4px;"></span>N</span>
+  </div>`;
+
+  return `
+    <div class="page-content">
+      ${renderAggHeader(ctx, 4, totalPages)}
+
+      <div class="r-section-label">11 — CA HT PAR JOUR (N vs N-1)</div>
+      <div class="r-block">
+        ${renderDayByDayBars(agg.days, true)}
+        ${legend}
+      </div>
+
+      <div class="r-section-label">12 — FRÉQUENTATION BTOC PAR JOUR (N vs N-1)</div>
+      <div class="r-block">
+        ${renderDayByDayBars(agg.days, false)}
+        ${legend}
+      </div>
+    </div>
+    ${renderAggFooter(ctx, 4, totalPages)}`;
+}
+
+// ============================================
+// Orchestrateurs hebdo / mensuel
+// ============================================
+function renderWeekReport(weekKey) {
+  if (!currentAllDays || !currentWeeks) return;
+  const wk = currentWeeks.find(w => w.key === weekKey);
+  if (!wk) return;
+
+  const agg = computeAggregate(currentAllDays, wk.sheets, currentVersion);
+  const dates = wk.sheets.map(s => s.date);
+  const first = dates[0], last = dates[dates.length - 1];
+  const periodLabel = `S${String(wk.week).padStart(2, "0")} · ${capitalize(JOURS_FR[first.getDay()])} ${first.getDate()} ${MOIS_FR[first.getMonth()]} — ${capitalize(JOURS_FR[last.getDay()])} ${last.getDate()} ${MOIS_FR[last.getMonth()]} ${wk.year}`;
+
+  const ctx = { agg, version: currentVersion, modeLabel: "HEBDOMADAIRE", periodLabel };
+  const pages = [
+    renderAggPage1(ctx, 4), renderAggPage2(ctx, 4),
+    renderAggPage3(ctx, 4), renderWeekPage4(ctx),
+  ];
+  reportContainer.innerHTML = pages.map(p => `<div class="page-sheet">${p}</div>`).join("");
+  reportContainer.classList.add("ready");
+  btnPrint.disabled = false;
+}
+
+function renderMonthReport(monthKey) {
+  if (!currentAllDays || !currentMonths) return;
+  const mk = currentMonths.find(m => m.key === monthKey);
+  if (!mk) return;
+
+  const agg = computeAggregate(currentAllDays, mk.sheets, currentVersion);
+  const periodLabel = `${capitalize(MOIS_FR[mk.month])} ${mk.year}`;
+
+  const ctx = { agg, version: currentVersion, modeLabel: "MENSUEL", periodLabel };
+  const pages = [
+    renderAggPage1(ctx, 4), renderAggPage2(ctx, 4),
+    renderAggPage3(ctx, 4), renderMonthPage4(ctx),
+  ];
+  reportContainer.innerHTML = pages.map(p => `<div class="page-sheet">${p}</div>`).join("");
+  reportContainer.classList.add("ready");
+  btnPrint.disabled = false;
+}
+
+
+// ============================================
 // UI : drop zone, sélecteur de jour, version, print, reset
 // ============================================
 let currentWorkbook = null;
-let currentAllDays = null;   // { sheetName: rawDay, ... }
-let currentDatedSheets = null;  // [{sheet, date, label}, ...] triés croissant
+let currentAllDays = null;
+let currentDatedSheets = null;
 let currentVersion = "commission";
+let currentMode = "jour";
+let currentWeeks = null;
+let currentMonths = null;
 
-const dropZone   = document.getElementById("dropZone");
-const fileInput  = document.getElementById("fileInput");
-const fileName   = document.getElementById("fileName");
-const daySelect  = document.getElementById("daySelect");
+const dropZone        = document.getElementById("dropZone");
+const fileInput       = document.getElementById("fileInput");
+const fileName        = document.getElementById("fileName");
+const daySelect       = document.getElementById("daySelect");
+const weekSelect      = document.getElementById("weekSelect");
+const monthSelect     = document.getElementById("monthSelect");
 const radioCommission = document.getElementById("radioCommission");
 const radioTotalPhotos = document.getElementById("radioTotalPhotos");
-const btnPrint   = document.getElementById("btnPrint");
-const btnReset   = document.getElementById("btnReset");
-const logZone    = document.getElementById("logZone");
+const btnPrint        = document.getElementById("btnPrint");
+const btnReset        = document.getElementById("btnReset");
+const logZone         = document.getElementById("logZone");
 const reportContainer = document.getElementById("reportContainer");
 
 function log(msg, type) {
@@ -1211,6 +1797,23 @@ function handleFile(file) {
         dated.map(({ sheet, date }) => `<option value="${sheet}">${capitalize(JOURS_FR[date.getDay()])} ${date.getDate()} ${MOIS_FR[date.getMonth()]} ${date.getFullYear()}</option>`).join("");
 
       daySelect.disabled = false;
+
+      // Groupes hebdo / mensuel
+      currentWeeks  = groupByWeek(dated);
+      currentMonths = groupByMonth(dated);
+
+      weekSelect.innerHTML = `<option value="">— Sélectionner une semaine —</option>` +
+        currentWeeks.map(w => {
+          const ds = w.sheets.map(s => s.date);
+          const first = ds[0], last = ds[ds.length - 1];
+          return `<option value="${w.key}">S${String(w.week).padStart(2,"0")} · ${capitalize(JOURS_FR[first.getDay()])} ${first.getDate()} ${MOIS_FR[first.getMonth()]} → ${capitalize(JOURS_FR[last.getDay()])} ${last.getDate()} ${MOIS_FR[last.getMonth()]} ${w.year}</option>`;
+        }).join("");
+      weekSelect.disabled = false;
+
+      monthSelect.innerHTML = `<option value="">— Sélectionner un mois —</option>` +
+        currentMonths.map(m => `<option value="${m.key}">${capitalize(MOIS_FR[m.month])} ${m.year}</option>`).join("");
+      monthSelect.disabled = false;
+
       radioCommission.disabled = false;
       radioTotalPhotos.disabled = false;
       btnReset.disabled = false;
@@ -1235,15 +1838,43 @@ function handleFile(file) {
   reader.readAsArrayBuffer(file);
 }
 
+// === Mode tabs ===
+document.querySelectorAll(".mode-tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    currentMode = btn.dataset.mode;
+    document.querySelectorAll(".mode-tab").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("controlsJour").style.display    = currentMode === "jour"    ? "flex" : "none";
+    document.getElementById("controlsSemaine").style.display = currentMode === "semaine" ? "flex" : "none";
+    document.getElementById("controlsMois").style.display    = currentMode === "mois"    ? "flex" : "none";
+    const titles = { jour: "📅 Jour à présenter", semaine: "📅 Semaine à présenter", mois: "📅 Mois à présenter" };
+    document.getElementById("periodTitle").textContent = titles[currentMode];
+    reportContainer.classList.remove("ready");
+    reportContainer.innerHTML = "";
+    btnPrint.disabled = true;
+    clearLog();
+  });
+});
+
 // === Sélection du jour ===
 daySelect.addEventListener("change", () => {
   if (daySelect.value) renderReport(daySelect.value);
 });
 
+// === Sélection semaine / mois ===
+weekSelect.addEventListener("change", () => {
+  if (weekSelect.value) renderWeekReport(weekSelect.value);
+});
+monthSelect.addEventListener("change", () => {
+  if (monthSelect.value) renderMonthReport(monthSelect.value);
+});
+
 // === Version (commission / total photos) ===
 function onVersionChange() {
   currentVersion = radioTotalPhotos.checked ? "total_photos" : "commission";
-  if (daySelect.value) renderReport(daySelect.value);
+  if (currentMode === "jour"    && daySelect.value)   renderReport(daySelect.value);
+  if (currentMode === "semaine" && weekSelect.value)  renderWeekReport(weekSelect.value);
+  if (currentMode === "mois"    && monthSelect.value) renderMonthReport(monthSelect.value);
 }
 radioCommission.addEventListener("change", onVersionChange);
 radioTotalPhotos.addEventListener("change", onVersionChange);
@@ -1256,10 +1887,14 @@ btnReset.addEventListener("click", () => {
   currentWorkbook = null;
   currentAllDays = null;
   currentDatedSheets = null;
+  currentWeeks = null;
+  currentMonths = null;
   fileName.textContent = "";
   fileInput.value = "";
-  daySelect.innerHTML = `<option value="">— Charger un fichier d'abord —</option>`;
-  daySelect.disabled = true;
+  daySelect.innerHTML   = `<option value="">— Charger un fichier d'abord —</option>`;
+  weekSelect.innerHTML  = `<option value="">— Charger un fichier d'abord —</option>`;
+  monthSelect.innerHTML = `<option value="">— Charger un fichier d'abord —</option>`;
+  daySelect.disabled = weekSelect.disabled = monthSelect.disabled = true;
   radioCommission.checked = true;
   radioCommission.disabled = true;
   radioTotalPhotos.disabled = true;
